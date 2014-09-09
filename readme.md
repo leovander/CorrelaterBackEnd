@@ -18,4 +18,4 @@ Documentation for the entire framework can be found on the [Laravel website](htt
 
 ### Contributing To Laravel
 
-**All issues and pull requests should be filed on the [laravel/framework](http://github.com/laravel/framework) repository.**
+** All issues and pull requests should be filed on the [laravel/framework](http://github.com/laravel/framework) repository.**
