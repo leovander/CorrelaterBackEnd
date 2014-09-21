@@ -12,5 +12,18 @@
 */
 
 Route::get('/', 'HomeController@showWelcome');
+
+//USER ROUTES
+Route::post('user/createAccount', 'UserController@createAccount');
+Route::post('user/login', 'UserController@login');
+Route::get('user/addFriend/{myid}/{hisid}','UserController@addFriend');
+Route::get('user/acceptFriend/{hisid}/{myid}','UserController@acceptFriend');
+Route::get('user/getMyInfo','UserController@getMyInfo');
+Route::post('login', 'UserController@displayLog');
+
+//GOOOGLE ROUTES
+Route::post('google/createWithGoogleAccount', 'GoogleController@createWithGoogleAccount');
+Route::get('google/show/{id}', 'GoogleController@show');
+
 Route::resource('user', 'UserController');
 Route::resource('event', 'EventController');
