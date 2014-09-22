@@ -84,6 +84,8 @@ class GoogleController extends \BaseController {
 	public function show($id)
 	{
 		//
+		$user = User::find($id);
+		Helpers::pr($user);
 	}
 
 	/**
