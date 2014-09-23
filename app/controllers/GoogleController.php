@@ -18,9 +18,7 @@ class GoogleController extends \BaseController {
 	 *
 	 * @return Response
 	 */
-	public function createWithGoogleAccount()
-	{
-		//
+	public function createWithGoogleAccount() {
 		header('Content-type: application/json');			
 		$response = array();
 		
@@ -64,6 +62,32 @@ class GoogleController extends \BaseController {
 		return $profile;
 	}
 	
+	public function refreshGoogleAccessToken($id) {
+		$user = User::find($id);
+		$settings = Setting::where('source', '=', 'google')->get();
+		
+		$data = array('client_id' => $settings[0]->client_id,
+					  'refresh_token' => $user->google_refresh_token,
+					  'grant_type' => 'refresh_token');
+		
+	    $ch = curl_init();
+	    
+		curl_setopt($ch, CURLOPT_URL, 'https://accounts.google.com/o/oauth2/token');
+		curl_setopt($ch, CURLOPT_POST, 1);
+		curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+		
+		$response = json_decode(curl_exec($ch));
+		
+		if(curl_getinfo($ch)['http_code'] == '200') {
+			$user->google_access_token = $response->access_token;
+			$user->google_id_token = $response->id_token;
+			$user->save();
+		}
+		
+		curl_close($ch);
+	}
+	
 	/**
 	 * Store a newly created resource in storage.
 	 *
@@ -83,28 +107,7 @@ class GoogleController extends \BaseController {
 	 */
 	public function show($id)
 	{
-		//GET USER WITH SPECIFIC ID
-		$user = User::find($id);
-		
-		//GET GOOGLE SETTINGS
-		$settings = Setting::where('source', '=', 'google')->get();
-		
-		//SET CLIENT ID, USER REFRESH TOKEN
-		$data = array('client_id' => $settings[0]->client_id,
-					  'refresh_token' => $user->google_refresh_token,
-					  'grant_type' => 'refresh_token');
-		
-	    $ch = curl_init();
-	    //THIS IS WHERE THE REQUEST IS GOING
-		curl_setopt($ch, CURLOPT_URL, 'https://accounts.google.com/o/oauth2/token');
-		//SAYING THAT WE ARE PASSING INFO
-		curl_setopt($ch, CURLOPT_POST, 1);
-		//PASS WHAT WE SET ABOVE
-		curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
-		
-		print('<pre>');
-		curl_exec($ch);
-		print('</pre>');
+		//
 	}
 
 	/**

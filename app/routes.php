@@ -23,7 +23,7 @@ Route::post('login', 'UserController@displayLog');
 
 //GOOOGLE ROUTES
 Route::post('google/createWithGoogleAccount', 'GoogleController@createWithGoogleAccount');
-Route::get('google/show/{id}', 'GoogleController@show');
+Route::get('google/refreshGoogleAccessToken/{id}', 'GoogleController@refreshGoogleAccessToken');
 
 Route::resource('user', 'UserController');
 Route::resource('event', 'EventController');
