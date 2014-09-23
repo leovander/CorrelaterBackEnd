@@ -83,9 +83,28 @@ class GoogleController extends \BaseController {
 	 */
 	public function show($id)
 	{
-		//
+		//GET USER WITH SPECIFIC ID
 		$user = User::find($id);
-		Helpers::pr($user);
+		
+		//GET GOOGLE SETTINGS
+		$settings = Setting::where('source', '=', 'google')->get();
+		
+		//SET CLIENT ID, USER REFRESH TOKEN
+		$data = array('client_id' => $settings[0]->client_id,
+					  'refresh_token' => $user->google_refresh_token,
+					  'grant_type' => 'refresh_token');
+		
+	    $ch = curl_init();
+	    //THIS IS WHERE THE REQUEST IS GOING
+		curl_setopt($ch, CURLOPT_URL, 'https://accounts.google.com/o/oauth2/token');
+		//SAYING THAT WE ARE PASSING INFO
+		curl_setopt($ch, CURLOPT_POST, 1);
+		//PASS WHAT WE SET ABOVE
+		curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+		
+		print('<pre>');
+		curl_exec($ch);
+		print('</pre>');
 	}
 
 	/**
