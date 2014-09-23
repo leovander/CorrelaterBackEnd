@@ -23,24 +23,29 @@ class GoogleController extends \BaseController {
 		$response = array();
 		
 		if(isset($_POST['google_access_token'])) {
+
 			$profile = $this->getGoogleProfile($_POST['google_access_token']);
-			
-			$users = User::where('email', '=', $profile->email)->take(1)->get();
-			if($users->isEmpty()){
-				$new_user = new User;
-				$new_user->google_access_token = $_POST['google_access_token'];
-				$new_user->google_refresh_token = $_POST['google_refresh_token'];
-				$new_user->google_id_token = $_POST['google_id_token'];
-				$new_user->google_code = $_POST['google_code'];
-				$new_user->email = $profile->email;
-				$new_user->first_name = $profile->given_name;
-				$new_user->last_name = $profile->family_name;
-				$new_user->google_id = $profile->id;
-				$new_user->save();
-				$response['message'] = 'Account Created';
-			} else {
-				$response['message'] = 'Email Taken';
-			}
+
+            if ($profile !== false) {
+                $users = User::where('email', '=', $profile->email)->take(1)->get();
+                if ($users->isEmpty()) {
+                    $new_user = new User;
+                    $new_user->google_access_token = $_POST['google_access_token'];
+                    $new_user->google_refresh_token = $_POST['google_refresh_token'];
+                    $new_user->google_id_token = $_POST['google_id_token'];
+                    $new_user->google_code = $_POST['google_code'];
+                    $new_user->email = $profile->email;
+                    $new_user->first_name = $profile->given_name;
+                    $new_user->last_name = $profile->family_name;
+                    $new_user->google_id = $profile->id;
+                    $new_user->save();
+                    $response['message'] = 'Account Created';
+                } else {
+                    $response['message'] = 'Email Taken';
+                }
+            } else {
+                $response['message'] = 'Profile not created';
+            }
 		}
 		
 		return json_encode($response);
@@ -52,16 +57,38 @@ class GoogleController extends \BaseController {
 		$profile = file_get_contents($request_url.'?access_token='.$access_token);
 		
 		if($profile === false) {
-			header('Content-type: application/json');
-			$response['message'] = 'Unauthorized Google Access';
-			return json_encode($response);
+			return false;
 		} else {
 			$profile = json_decode($profile);
 		}
 		
 		return $profile;
 	}
-	
+
+    //Helper function: Get Google Token Info for expiration time
+    public function isValidGoogleToken ($id) {
+        $user = User::find($id);
+
+        $request_url = 'https://www.googleapis.com/oauth2/v1/tokeninfo';
+        $profile = json_decode(file_get_contents($request_url.'?access_token='.$user->google_access_token));
+
+        if ($profile === false) {
+            return false;
+        } else {
+            //refresh the token if expiration time is less than 10 mins (600 secs)
+            if ((int)$profile->expires_in < 600) {
+                if ($this->refreshGoogleAccessToken($id)) {
+                    return true;
+                } else {
+                    return false;
+                }
+            } else {
+                return true;
+            }
+        }
+    }
+
+    //Helper function: Refresh Google Access Token when the old Access Token expired
 	public function refreshGoogleAccessToken($id) {
 		$user = User::find($id);
 		$settings = Setting::where('source', '=', 'google')->get();
@@ -76,16 +103,19 @@ class GoogleController extends \BaseController {
 		curl_setopt($ch, CURLOPT_POST, 1);
 		curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-		
+
 		$response = json_decode(curl_exec($ch));
-		
+
 		if(curl_getinfo($ch)['http_code'] == '200') {
 			$user->google_access_token = $response->access_token;
 			$user->google_id_token = $response->id_token;
 			$user->save();
-		}
-		
-		curl_close($ch);
+            curl_close($ch);
+            return true;
+		} else {
+            curl_close($ch);
+            return false;
+        }
 	}
 	
 	/**
@@ -107,7 +137,7 @@ class GoogleController extends \BaseController {
 	 */
 	public function show($id)
 	{
-		//
+
 	}
 
 	/**
