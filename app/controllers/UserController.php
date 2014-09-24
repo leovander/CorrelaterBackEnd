@@ -56,7 +56,7 @@ class UserController extends \BaseController {
 				$user->save();
 				
 				$response['message'] = 'Account Created';
-				Auth::login($new_user, true);
+				Auth::login($user, true);
 			} else {
 				$response['message'] = 'Email Taken';
 			}
