@@ -19,9 +19,6 @@ class GoogleController extends \BaseController {
 	 * @return Response
 	 */
 	public function createWithGoogleAccount() {
-		header('Content-type: application/json');			
-		$response = array();
-		
 		if(isset($_POST['google_access_token'])) {
 
 			$profile = $this->getGoogleProfile($_POST['google_access_token']);
@@ -38,7 +35,11 @@ class GoogleController extends \BaseController {
                     $new_user->first_name = $profile->given_name;
                     $new_user->last_name = $profile->family_name;
                     $new_user->google_id = $profile->id;
+                    $new_user->valid = 1;
                     $new_user->save();
+                    
+                    Auth::login($new_user, true);
+                    
                     $response['message'] = 'Account Created';
                 } else {
                     $response['message'] = 'Email Taken';
@@ -48,9 +49,9 @@ class GoogleController extends \BaseController {
             }
 		}
 		
+		header('Content-type: application/json');
 		return json_encode($response);
-	}
-		
+	}	
 	
 	public function getGoogleProfile ($access_token) {
 		$request_url = 'https://www.googleapis.com/oauth2/v2/userinfo';

@@ -1,7 +1,11 @@
 <?php
 
-class UserController extends \BaseController {
+/* TODO LIST: 
+ * Deny Friend Request
+ * get a list of my friend's events and return if the ones who are free
+ */
 
+class UserController extends \BaseController {
 	/**
 	 * Display a listing of the resource.
 	 *
@@ -31,17 +35,31 @@ class UserController extends \BaseController {
 	{			
 		$response = array();
 		if($_POST['password']==$_POST['verify_password']){
-			$users = User::where('email', '=', $_POST['email'])->take(1)->get();
-			if($users->isEmpty()){
+			$user = User::where('email', '=', $_POST['email'])->take(1)->get();
+			if($user->isEmpty()) {
 				$new_user = new User;
 				$new_user->first_name = $_POST['first_name'];
 				$new_user->last_name = $_POST['last_name'];
 				$new_user->email = $_POST['email'];
 				$new_user->password = Hash::make($_POST['password']);
+				$new_user->valid = 1;
 				$new_user->save();
+				
 				$response['message'] = 'Account Created';
+				Auth::login($new_user, true);
+			} else if($user[0]->valid == 0) {
+				$user = User::find($user[0]->id);
+				$user->first_name = $_POST['first_name'];
+				$user->last_name = $_POST['last_name'];
+				$user->password = Hash::make($_POST['password']);
+				$user->valid = 1;
+				$user->save();
+				
+				$response['message'] = 'Account Created';
+				Auth::login($new_user, true);
+			} else {
+				$response['message'] = 'Email Taken';
 			}
-			else $response['message'] = 'Email Taken';
 		}
 		else
 		{
@@ -49,88 +67,181 @@ class UserController extends \BaseController {
 		}
 		
 		header('Content-type: application/json');
-		echo json_encode($response);
+		return json_encode($response);
 	}
-	public function displayLog()
-	{
-		View::make('Login');
-	}
+	
 	public function login(){
-		$response = array();
-		
-		if (Auth::attempt(array('email' => $_POST['email'], 'password' => $_POST['password'])))
+		if(Auth::attempt(array('email' => $_POST['email'], 'password' => $_POST['password']), true))
 		{
-			$response['message'] = Auth::user()->email;
-			Redirect::to('user/getMyInfo');
-		}
-		else
-		{
+			$response['message'] = 'Logged In';
+			$response['user'] = Auth::user();
+		} else {
 			$response['message'] = 'Email or Password is incorrect';		
 		}
 		
 		header('Content-type: application/json');
-		echo json_encode($response);
+		return json_encode($response);
 	}
 	
 	public function getMyInfo()
 	{
-		if(!Auth::check()) echo 'not logged in';
-		
-		else
-		{
-			$temp = Auth::user()->first_name;
-			echo 'hello $temp';
+		if(Auth::check()) {
+			$response['message'] = 'Logged In';
+			$response['user'] = Auth::user();
+		} else {
+			$response['message'] = 'Not Logged In';
 		}
-	}
-	
-	public function checkUserExists()
-	{
-		$response = array();
 		
-		$user = User::where('email','=',$_POST['email'])->get();
-		if($user->isEmpty())
-		{
-			$response['message'] = 'E-mail Doesnt Exist';
-		}		
-		else
-		{
-			$response['user_info'] = $user;
-		}
 		header('Content-type: application/json');
-		echo json_encode($response);
+		return json_encode($response);
 	}
 	
-	public function addFriend($createID, $sentID)
-	{
+	//Check if friend with given email exists
+	public function checkUserExists()
+	{		
+		$friend = User::where('email','=',$_POST['email'])->get();
+		if($friend->isEmpty())
+		{
+			$response['message'] = 'User Not Found';
+			$response['email'] = $_POST['email'];
+			//next call should be addFriend() as temporary and sendInvite()
+		} else {
+			$isFriend = DB::table('users')
+    					->leftJoin('friends', 'users.id', '=', 'friends.user_id')
+    						->select('users.id', 'users.first_name', 'users.last_name', 'users.email', 'users.valid')
+						->where('friends.friend_id', '=', Auth::user()->id)
+						->where('users.id', '=', $friend[0]->id)
+						->get();
+			
+			if(empty($isFriend)) {
+				$response['message'] = 'Not Friends';
+			} else {
+				$response['message'] = 'Already Friends';
+			}
+			
+			$response['user'] = $friend[0];
+		}
 		
-		$requestedFriend = $_POST ['user_info'];
-		
-		$friendship = new Friend;
-		$friendship->user_id = $createID;
-		$friendship->friend_id = $sentID;
-		$friendship->friend_status = 0;
-		$friendship->save();
-		
+		header('Content-type: application/json');
+		return json_encode($response);
 	}
-	/**
-	 * Store a newly created resource in storage.
-	 *
-	 * @return Response
-	 */
-	 
-	public function acceptFriend($sentID, $createID)
-	{
-		$friendship = Friend::where('friend_id', '=', $sentID)
-							->where('user_id','=',$createID)
-							->update(array('friend_status' => 1));
-							
-		$newFriend = new Friend;
-		$newFriend->user_id = $sentID;
-		$newFriend->friend_id = $createID;
-		$newFriend->friend_status = 1;
-		$newFriend->save();
+	
+	//Call this if user_info was returned from checkUserExists()
+	public function addFriend($friendId)
+	{		
+		if(Auth::check()) {
+			$frienda = new Friend;
+			$frienda->user_id = Auth::user()->id;
+			$frienda->friend_id = $friendId;
+			$frienda->friend_status = 0;
+			
+			$friendb = new Friend;
+			$friendb->user_id = $friendId;
+			$friendb->friend_id = Auth::user()->id;
+			$friendb->friend_status = 0;
+	
+			if($frienda->save() && $friendb->save() ) {
+				$response['message'] = 'Request Sent';
+			} else {
+				$response['message'] = 'Request Failed';
+			}
+		}
 		
+		header('Content-type: application/json');
+		return json_encode($response);
 	}
+	
+	//accepts a friend request
+	public function acceptFriend($friendId)
+	{
+		if(Auth::check()) {
+			Friend::where('user_id','=',$friendId)
+					->where('friend_id', '=', Auth::user()->id)
+					->update(array('friend_status' => 1));
+					
+			Friend::where('user_id','=',Auth::user()->id)
+					->where('friend_id', '=', $friendId)
+					->update(array('friend_status' => 1));
+
+			$response['message'] = 'Friend Accepted';
+		}
+		
+		header('Content-type: application/json');
+		return json_encode($response);
+	}
+	
+	//Send email if not in server, called from frontEnd()
+	public function sendInvite()
+	{
+		if(Auth::check()) {
+			$user = User::where('email', '=', $_POST['email'])->take(1)->get();
+			
+			if($user->isEmpty()){
+				$new_user = new User;
+				$new_user->email = $_POST['email'];
+				if($new_user->save()) {
+					$this->addFriend($new_user->id);
+				}
+			}
+				
+			$data = array('first_name' => Auth::user()->first_name, 'email' => Auth::user()->email);
+			Mail::queue('emails.test', $data, function($message) {
+				$message->to($_POST['email'])
+					->subject("Welcome to I'm Free!");
+			});
+			$response['message'] = 'Sent';
+		}
+		
+		header('Content-type: application/json');
+		return json_encode($response);
+	}
+	
+	public function logout()
+	{
+		Auth::logout();
+		header('Content-type: application/json');
+		$response['message'] = 'Logged Out';
+		return json_encode($response);
+	}
+	
+	public function getFriends() {
+		if(Auth::check()) {
+			$friends = DB::table('users')
+        				->join('friends', 'users.id', '=', 'friends.user_id')
+	        			->select('user.username')
+					->where('friends.friend_id', '=', Auth::user()->id)
+	        			->where('friends.valid','=',1)
+					->get();
+			$response['message'] = 'Success';
+			$response['friends'] = $friends;
+		}
+		else {
+			$response['message'] = 'Not Logged In';
+		}
+	
+		header('Content-type: application/json');
+		return json_encode($response);
+	}
+	
+	public function getRequests() {
+		if(Auth::check()) {
+			$requests = DB::table('users')
+        				->join('friends', 'users.id', '=', 'friends.user_id')
+	        			->select('user.username')
+					->where('friends.friend_id', '=', Auth::user()->id)
+	        			->where('friends.valid','=',0)
+					->get();
+			$response['message'] = 'Success';
+			$response['friends'] = $requests;
+		}
+		else {
+			$response['message'] = 'Not Logged In';
+		}			
+
+		header('Content-type: application/json');
+		return json_encode($response);	
+	}	
+
 	public function store()
 	{
 		//

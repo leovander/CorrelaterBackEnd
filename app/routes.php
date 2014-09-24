@@ -16,12 +16,15 @@ Route::get('/', 'HomeController@showWelcome');
 //USER ROUTES
 Route::post('user/createAccount', 'UserController@createAccount');
 Route::post('user/login', 'UserController@login');
-Route::get('user/addFriend/{myid}/{hisid}','UserController@addFriend');
-Route::get('user/acceptFriend/{hisid}/{myid}','UserController@acceptFriend');
+Route::get('user/logout', 'UserController@logout');
 Route::get('user/getMyInfo','UserController@getMyInfo');
-Route::post('login', 'UserController@displayLog');
 
-//GOOOGLE ROUTES
+Route::post('user/checkUserExists','UserController@checkUserExists');
+Route::get('user/addFriend/{id}','UserController@addFriend');
+Route::get('user/acceptFriend/{id}','UserController@acceptFriend');
+Route::post('user/sendInvite', 'UserController@sendInvite');
+
+//GOOGLE ROUTES
 Route::post('google/createWithGoogleAccount', 'GoogleController@createWithGoogleAccount');
 Route::get('google/refreshGoogleAccessToken/{id}', 'GoogleController@refreshGoogleAccessToken');
 Route::get('google/isValidGoogleToken/{id}', 'GoogleController@isValidGoogleToken');
