@@ -8,9 +8,9 @@ use Illuminate\Auth\Reminders\RemindableInterface;
 class User extends Eloquent implements UserInterface, RemindableInterface {
 
 	public $timestamps = false;
-	
+
 	use UserTrait, RemindableTrait;
-	
+
 	/**
 	 * The database table used by the model.
 	 *
@@ -23,6 +23,5 @@ class User extends Eloquent implements UserInterface, RemindableInterface {
 	 *
 	 * @var array
 	 */
-	protected $hidden = array('password', 'remember_token', 'google_access_token', 'google_code', 'google_id', 'google_id_token', 'google_refresh_token');
-
+	protected $hidden = array('password', 'remember_token', 'google_code', 'google_id', 'google_id_token', 'google_refresh_token');
 }

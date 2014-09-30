@@ -45,13 +45,8 @@ class UserController extends \BaseController {
 				$new_user->valid = 1;
 				$new_user->save();
 
-				$credentials = array(
-				    'email' => $_POST['email'],
-				    'password' => $_POST['password']
-				);
-				
-				if (Auth::attempt($credentials, true)) {
-				    $response['message'] = 'Account Created';
+				if(Auth::attempt(array('email' => $_POST['email']), true)) {
+					$response['message'] = 'Account Created';
 				}
 			} else if($user[0]->valid == 0) {
 				$user = User::find($user[0]->id);
@@ -61,13 +56,8 @@ class UserController extends \BaseController {
 				$user->valid = 1;
 				$user->save();
 
-				$credentials = array(
-				    'email' => $user[0]->email,
-				    'password' => $_POST['password']
-				);
-				
-				if (Auth::attempt($credentials, true)) {
-				    $response['message'] = 'Account Created';
+				if(Auth::attempt(array('email' => $user[0]->email, 'password' => $user[0]->password), true)) {
+					$response['message'] = 'Account Created';
 				}
 			} else {
 				$response['message'] = 'Email Taken';
@@ -81,22 +71,9 @@ class UserController extends \BaseController {
 		header('Content-type: application/json');
 		return json_encode($response);
 	}
-	
+
 	public function login(){
 		if(Auth::attempt(array('email' => $_POST['email'], 'password' => $_POST['password']), true))
-		{
-			$response['message'] = 'Logged In';
-			$response['user'] = Auth::user();
-		} else {
-			$response['message'] = 'Email or Password is incorrect';
-		}
-
-		header('Content-type: application/json');
-		return json_encode($response);
-	}
-	
-	public function googleLogin(){
-		if(Auth::attempt(array('email' => $_POST['email'], 'password' => $_POST['email']), true))
 		{
 			$response['message'] = 'Logged In';
 			$response['user'] = Auth::user();
@@ -237,7 +214,6 @@ class UserController extends \BaseController {
 			$friends = DB::table('users')
         				->join('friends', 'users.id', '=', 'friends.user_id')
 	        			->select('users.id', 'users.first_name', 'users.last_name')
-	        			->orderBy('users.first_name', 'asc')
 						->where('friends.friend_id', '=', Auth::user()->id)
 	        			->where('friends.friend_status','=',1)
 						->get();
@@ -304,33 +280,10 @@ class UserController extends \BaseController {
 
 
 	}
-	
-	public function getFriendsNow()
-	{
-		if(Auth::check()) {
-			$friends = DB::table('users')
-        				->join('friends', 'users.id', '=', 'friends.user_id')
-	        			->select('users.id', 'users.first_name', 'users.last_name')
-	        			->orderBy('users.first_name', 'asc')
-						->where('friends.friend_id', '=', Auth::user()->id)
-	        			->where('friends.friend_status','=',1)
-	        			->where('users.status','=',1)
-						->get();
-			$response['message'] = 'Success';
-			$response['count'] = count($friends);
-			$response['friends'] = $friends;
-		}
-		else {
-			$response['message'] = 'Not Logged In';
-		}
-
-		header('Content-type: application/json');
-		return json_encode($response);
-	}
-	
 	public function store()
 	{
 		//
+
 	}
 
 
@@ -380,5 +333,6 @@ class UserController extends \BaseController {
 	{
 		//
 	}
+
 
 }

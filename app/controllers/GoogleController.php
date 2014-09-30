@@ -32,15 +32,21 @@ class GoogleController extends \BaseController {
                     $new_user->google_id_token = $_POST['google_id_token'];
                     $new_user->google_code = $_POST['google_code'];
                     $new_user->email = $profile->email;
+                    $new_user->password = Hash::make($profile->email);
                     $new_user->first_name = $profile->given_name;
                     $new_user->last_name = $profile->family_name;
                     $new_user->google_id = $profile->id;
                     $new_user->valid = 1;
                     $new_user->save();
-                    
-                    Auth::login($new_user, true);
-                    
-                    $response['message'] = 'Account Created';
+
+                $credentials = array(
+				  'email' => $profile->email,
+				  'password' => $profile->email
+				);
+
+				if (Auth::attempt($credentials, true)) {
+				    $response['message'] = 'Account Created';
+				}
                 } else {
                     $response['message'] = 'Email Taken';
                 }
@@ -48,21 +54,21 @@ class GoogleController extends \BaseController {
                 $response['message'] = 'Profile not created';
             }
 		}
-		
+
 		header('Content-type: application/json');
 		return json_encode($response);
-	}	
-	
+	}
+
 	public function getGoogleProfile ($access_token) {
 		$request_url = 'https://www.googleapis.com/oauth2/v2/userinfo';
 		$profile = file_get_contents($request_url.'?access_token='.$access_token);
-		
+
 		if($profile === false) {
 			return false;
 		} else {
 			$profile = json_decode($profile);
 		}
-		
+
 		return $profile;
 	}
 
@@ -93,13 +99,13 @@ class GoogleController extends \BaseController {
 	public function refreshGoogleAccessToken($id) {
 		$user = User::find($id);
 		$settings = Setting::where('source', '=', 'google')->get();
-		
+
 		$data = array('client_id' => $settings[0]->client_id,
 					  'refresh_token' => $user->google_refresh_token,
 					  'grant_type' => 'refresh_token');
-		
+
 	    $ch = curl_init();
-	    
+
 		curl_setopt($ch, CURLOPT_URL, 'https://accounts.google.com/o/oauth2/token');
 		curl_setopt($ch, CURLOPT_POST, 1);
 		curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
@@ -118,7 +124,7 @@ class GoogleController extends \BaseController {
             return false;
         }
 	}
-	
+
 	/**
 	 * Store a newly created resource in storage.
 	 *
@@ -130,15 +136,114 @@ class GoogleController extends \BaseController {
 	}
 
 
+	function get_my_url_contents($url){
+		$crl = curl_init();
+		$timeout = 5;
+		curl_setopt ($crl, CURLOPT_URL,$url);
+		curl_setopt ($crl, CURLOPT_RETURNTRANSFER, 1);
+		curl_setopt ($crl, CURLOPT_CONNECTTIMEOUT, $timeout);
+		$ret = curl_exec($crl);
+		curl_close($crl);
+		return $ret;
+	}
+
 	/**
 	 * Display the specified resource.
 	 *
 	 * @param  int  $id
 	 * @return Response
 	 */
+
+	public function getCalendars($id)
+	{
+		//if(Auth::check()) {
+			//$id = Auth::user()->id;
+			$user = User::where('email', '=','gyngaiu@gmail.com')->take(1)->get();
+
+			$calendars = (array) json_decode(file_get_contents('https://www.googleapis.com/calendar/v3/users/me/calendarList?access_token='.$user[0]->google_access_token));
+
+			$cal_ids = array();
+			if($calendars !== false) {
+				foreach($calendars['items'] as $calendar) {
+					if($calendar->accessRole == "owner") {
+					  array_push($cal_ids, array('id' => $calendar->id, 'name' => $calendar->summary));
+					}
+				}
+			}
+
+			$response['calendars'] = $cal_ids;
+		//}
+
+		//header('Content-type: application/json');
+		return json_encode($response);
+	}
+
+	public function pullEvents($id)
+	{
+
+		$user = User::where('email', '=','gyngaiu@gmail.com')->take(1)->get();
+
+		$response = $this->getCalendars($id);
+
+
+		$json_output = json_decode($response);
+		foreach ( $json_output->calendars as $calendar )
+		{
+			$events = (array) json_decode(file_get_contents('https://www.googleapis.com/calendar/v3/calendars/37qf0gif7kjcepgssfa0npndhk@group.calendar.google.com/events?access_token='.$user[0]->google_access_token));
+		}
+		Helpers::pr($events);
+
+		$json_output = json_decode($events);
+		foreach ($$json_output['items'] as $item) {
+				print ($item->kind);
+		}
+
+
+
+
+		//if(Auth::check()) {
+			//$id = Auth::user()->id;
+			// $calendars = (array) json_decode(file_get_contents('https://www.googleapis.com/calendar/v3/calendars'..'?access_token='.$user->google_access_token));
+			// https://www.googleapis.com/calendar/v3/calendars/{calendarId}/events
+			//
+			// $cal_ids = array();
+			// if($calendars !== false) {
+			// 	foreach($calendars['items'] as $calendar) {
+			// 		if($calendar->accessRole == "owner") {
+			// 		  array_push($cal_ids, array('id' => $calendar->id, 'name' => $calendar->summary));
+			// 		}
+			// 	}
+			// }
+			//
+			// $response['calendars'] = $cal_ids;
+		//}
+
+		// header('Content-type: application/json');
+		// return json_encode($response);
+	}
+
 	public function show($id)
 	{
 
+			// $event = new GoogleEvent;
+			// $event->start_time = '2014-09-27 21:00:00';
+			// $event->end_time = '2014-09-27 21:00:00';
+			// $event->kind = '2014-09-27 21:00:00';
+			// $event->created = '2014-09-27 21:00:00';
+			// $event->updated = '2014-09-27 21:00:00';
+			// $event->save();
+//		}
+
+
+		// Israel's code:
+		// foreach($calendars['items'] as $calendar) {
+		// 	if($calendar->accessRole == "owner") {
+		// 		print('id: '.$calendar->id.'</br>');
+		// 		print('calendar: '.$calendar->summary.'</br>');
+		// 		$events = (array) json_decode(file_get_contents('https://www.googleapis.com/calendar/v3/calendars/'.$calendar->id.'/events?access_token='.$user->google_access_token.'&singleEvents=true'));
+		// 		Helpers::pr($events);
+		// 	}
+		// }
 	}
 
 	/**
