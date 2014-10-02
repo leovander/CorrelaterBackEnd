@@ -2,15 +2,13 @@
 
 class GoogleEvent extends Eloquent {
 
-	public $timestamps = false;
+    /**
+     * The database table used by the model.
+     *
+     * @var string
+     */
+    protected $table = 'events';
 
-	/**
-	* The database table used by the model.
-	*
-	* @var string
-	*/
-	protected $table = 'events';
-
-	//protected $fillable = array('start_time', 'end_time', 'kind', 'created', 'updated');
+    protected $fillable = array('id', 'start_time', 'end_time', 'summary', 'created', 'updated');
 
 }

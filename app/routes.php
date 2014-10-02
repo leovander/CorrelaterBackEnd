@@ -37,4 +37,5 @@ Route::get('google/getCalendars/{id}', 'GoogleController@getCalendars');
 Route::get('google/pullEvents/{id}', 'GoogleController@pullEvents');
 
 Route::resource('user', 'UserController');
-Route::resource('event', 'EventController');
+Route::resource('event', 'GoogleEventController');
+Route::resource('google_calendar', 'GoogleCalendarController');
