@@ -15,9 +15,8 @@ class UserController extends \BaseController {
 	{
 		//
 		$results = DB::select('select * from users');
-		print('<pre>');
-		print_r($results);
-		print('</pre>');
+		header('Content-type: application/json');
+		return json_encode($results);
 	}
 
 
