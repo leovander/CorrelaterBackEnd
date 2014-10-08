@@ -9,6 +9,6 @@ class GoogleEvent extends Eloquent {
      */
     protected $table = 'events';
 
-    protected $fillable = array('id', 'start_time', 'end_time', 'summary', 'created', 'updated');
+    protected $fillable = array('id', 'start_date', 'start_time', 'end_date', 'end_time', 'summary', 'created', 'updated');
 
 }

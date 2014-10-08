@@ -179,88 +179,79 @@ class GoogleController extends \BaseController {
 	}
 
 	public function pullEvents($id)
-	{
-		$user = User::find($id);
+    {
+        $user = User::find($id);
         $eventArrays = array();
         $cal_events = array();
         $calendarIds = array();
         $myObjArray = array();
-        $eventIds = DB::table('events')
-                            ->select('id')
-                            ->where('user_id', '=', $id)
-                            ->get();
-        $calendarCurrents = DB::table('google_calendar')
-                            ->where('user_id', '=', $id)
-                            ->get();
 
-        //convert to an array of event id
+        $eventIds = DB::table('events')
+            ->select('id')
+            ->where('user_id', '=', $id)
+            ->get();
+        $calendarCurrents = DB::table('google_calendar')
+            ->where('user_id', '=', $id)
+            ->get();
+
+        //push only the calendar id into an array.
+        $calIds = array();
+        foreach ($calendarCurrents as $calendarCurrent) {
+            array_push($calIds, $calendarCurrent->id);
+        }
+
+        //push only the events id into an array
         foreach ($eventIds as $eventId) {
             array_push($eventArrays, $eventId->id);
         }
 
-		$calendars = $this->getCalendars($id);
-		$json_calendars = json_decode($calendars);
+        $calendars = $this->getCalendars($id);
+        $json_calendars = json_decode($calendars);
 
-        if(!empty($calendarCurrents) && !empty($json_calendars)) {
-            foreach ($calendarCurrents as $calendarCurrent) {
+        //push only the calendar id
+        $jCal = array();
+        foreach ($json_calendars->calendars as $cal) {
+            array_push($jCal, $cal->id);
+        }
+
+
+        //first time pulling user events
+//        if (empty($calendarCurrents)) {
+//            if (!empty($json_calendars)) {
                 foreach ($json_calendars->calendars as $calendar) {
-                    $events = (array)json_decode(file_get_contents('https://www.googleapis.com/calendar/v3/calendars/' . $calendar->id . '/events?singleEvents=true&syncToken=' . $calendarCurrent->sync_token . '&access_token=' . $user->google_access_token));
-                    //array_push($myObjArray, array('calendar_id' => $calendar->id, 'user_id' => $user->id, 'sync_token' => $events['nextSyncToken']));
+                    if (!in_array($calendar->id, $calIds)) { //check to see if there's new calendar
+                        $events = (array)json_decode(file_get_contents('https://www.googleapis.com/calendar/v3/calendars/' . $calendar->id . '/events?singleEvents=true&access_token=' . $user->google_access_token));
+                        array_push($myObjArray, array('calendar_id' => $calendar->id, 'user_id' => $user->id, 'sync_token' => $events['nextSyncToken']));
 
-                    Helpers::pr($events);
+                        $i = 0;
+                        //while (isset($events['nextPageToken'])) {
+                        foreach ($events['items'] as $event) {
+                            $today = strtotime(date('Y-m-d'));
+                            $eventStart = explode('T', $event->start->dateTime);
+                            $eventStartTime = substr($eventStart[1], 0, 8);
+                            $eventEnd = explode('T', $event->end->dateTime);
+                            $eventEndTime = substr($eventEnd[1], 0, 8);
 
-//                    foreach ($events['items'] as $event) {
-////                        if ($events['nextSyncToken'] == $cal_events[$i]['syncToken']) {
-//                        if (!array_key_exists($event->id, $eventArrays)) {
-//                            array_push($cal_events, array(
-//                                'id' => $event->id,
-//                                'calendar_id' => $calendar->id,
-//                                'user_id' => $user->id,
-//                                //'syncToken' => $events['nextSyncToken'],
-//                                'created' => $event->created,
-//                                'updated' => $event->updated,
-//                                'summary' => $event->summary,
-//                                'start_time' => $event->start->dateTime,
-//                                'end_time' => $event->end->dateTime));
-//                        }
-//                    }
-
-                    //overwrite the old token
-//                    $calendarCurrent->sync_token = $events['nextSyncToken'];
-//                    $calendarCurrent->save();
-//                    Helpers::pr($events);
-                }
-
-            }
-
-        } else { //first time pulling user events
-            if (!empty($json_calendars)) {
-                foreach ($json_calendars->calendars as $calendar) {
-                    $events = (array)json_decode(file_get_contents('https://www.googleapis.com/calendar/v3/calendars/' . $calendar->id . '/events?singleEvents=true&access_token=' . $user->google_access_token));
-                    array_push($myObjArray, array('calendar_id' => $calendar->id, 'user_id' => $user->id, 'sync_token' => $events['nextSyncToken']));
-
-                    $i = 0;
-                    //$cal_events[$calendar->id] = array();
-
-                    //while (isset($events['nextPageToken'])) {
-                    foreach ($events['items'] as $event) {
-//                        if ($events['nextSyncToken'] == $cal_events[$i]['syncToken']) {
-                            if (!in_array($event->id, $eventArrays)) {
-                                array_push($cal_events, array(
-                                                              'id' => $event->id,
-                                                     'calendar_id' => $calendar->id,
-                                                         'user_id' => $user->id,
-                                                       'syncToken' => $events['nextSyncToken'],
-                                                         'created' => $event->created,
-                                                         'updated' => $event->updated,
-                                                         'summary' => $event->summary,
-                                                      'start_time' => $event->start->dateTime,
-                                                        'end_time' => $event->end->dateTime));
+                            if (strtotime($eventStart[0]) >= $today) {
+                                if (!in_array($event->id, $eventArrays)) {
+                                    array_push($cal_events, array(
+                                        'id' => $event->id,
+                                        'calendar_id' => $calendar->id,
+                                        'user_id' => $user->id,
+                                        'syncToken' => $events['nextSyncToken'],
+                                        'created' => $event->created,
+                                        'updated' => $event->updated,
+                                        'summary' => $event->summary,
+                                        'start_date' => $eventStart[0],
+                                        'start_time' => $eventStartTime,
+                                        'end_date' => $eventEnd[0],
+                                        'end_time' => $eventEndTime));
+                                }
                             }
-//                        }
-                        $i++;
+                            $i++;
+                        }
+                        //}
                     }
-                    //}
                 }
 
                 foreach ($myObjArray as $event) {
@@ -279,25 +270,96 @@ class GoogleController extends \BaseController {
                     $new_event->created = $event['created'];
                     $new_event->updated = $event['updated'];
                     $new_event->summary = $event['summary'];
+                    $new_event->start_date = $event['start_date'];
                     $new_event->start_time = $event['start_time'];
+                    $new_event->end_date = $event['end_date'];
                     $new_event->end_time = $event['end_time'];
                     $new_event->save();
                 }
+                $cal_events = array(); //reset the array
+//            }
+//        }
+
+        //TODO: showDeleted=true to delete events deleted from google calendar
+        //compare db against google return value
+        foreach ($calendarCurrents as $calendarCurrent) {
+            // if calendar in both google return and db, check for new events in existing calendar(s)
+            if (in_array($calendarCurrent->id, $jCal)) {
+                $events = (array)json_decode(file_get_contents('https://www.googleapis.com/calendar/v3/calendars/' . $calendarCurrent->id . '/events?singleEvents=true&syncToken=' . $calendarCurrent->sync_token . '&access_token=' . $user->google_access_token));
+                array_push($myObjArray, array('calendar_id' => $calendarCurrent->id, 'user_id' => $user->id, 'sync_token' => $events['nextSyncToken']));
+                $i = 0;
+                //while (isset($events['nextPageToken'])) {
+                foreach ($events['items'] as $event) {
+                    if ($event->status === "cancelled") {
+                        $gEvent = GoogleEvent::find($event->id);
+                        $gEvent->delete();
+                    } else {
+                        $today = strtotime(date('Y-m-d'));
+                        $eventStart = explode('T', $event->start->dateTime);
+                        $eventStartTime = substr($eventStart[1], 0, 8);
+                        $eventEnd = explode('T', $event->end->dateTime);
+                        $eventEndTime = substr($eventEnd[1], 0, 8);
+
+                        if (strtotime($eventStart[0]) >= $today) {
+                            if (!in_array($event->id, $eventArrays)) {
+                                array_push($cal_events, array(
+                                    'id' => $event->id,
+                                    'calendar_id' => $calendarCurrent->id,
+                                    'user_id' => $user->id,
+                                    'syncToken' => $events['nextSyncToken'],
+                                    'created' => $event->created,
+                                    'updated' => $event->updated,
+                                    'summary' => $event->summary,
+                                    'start_date' => $eventStart[0],
+                                    'start_time' => $eventStartTime,
+                                    'end_date' => $eventEnd[0],
+                                    'end_time' => $eventEndTime));
+                            }
+                        }
+                        $i++;
+                    }
+                //}
+
+                    $gCalendar = GoogleCalendar::find($calendarCurrent->id);
+                    $gCalendar->sync_token = $events['nextSyncToken'];
+                    $gCalendar->save();
+
+                    foreach ($cal_events as $event) {
+                        $new_event = new GoogleEvent;
+                        $new_event->id = $event['id'];
+                        $new_event->user_id = $event['user_id'];
+                        $new_event->calendar_id = $event['calendar_id'];
+                        $new_event->created = $event['created'];
+                        $new_event->updated = $event['updated'];
+                        $new_event->summary = $event['summary'];
+                        $new_event->start_date = $event['start_date'];
+                        $new_event->start_time = $event['start_time'];
+                        $new_event->end_date = $event['end_date'];
+                        $new_event->end_time = $event['end_time'];
+                        $new_event->save();
+                    }
+                    $cal_events = array(); //reset the array
+                }
+                //if calendar found in db but not from google, delete from db
+            } else  if (!in_array($calendarCurrent->id, $jCal)) {
+                $gCalendar = GoogleCalendar::find($calendarCurrent->id);
+                $gCalendar->delete();
             }
         }
 
-
-
-
-//        } else {
-//            $response['message'] = "Could Not Pull Calendars";
+        //compare google return value against db
+//        foreach ($json_calendars->calendars as $cal) {
+//            if (!in_array($cal->id, $calIds)) { //check to see if there's new event
+//                //print($cal->id . " doesn't exist. <br />"); //pull new calendar anxd all events
+//
+//
+//            }//end if
 //        }
+    }
 
-//        print("EVENTS <br/>");
-//        Helpers::pr($events);`
-//        print("EVENTS_TO_PUSH");
-//        Helpers::pr($eventsToPush);
-	}
+
+
+
 
     public function show($id)
 	{
