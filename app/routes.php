@@ -34,8 +34,9 @@ Route::get('user/getFriends', 'UserController@getFriends');
 Route::post('google/createWithGoogleAccount', 'GoogleController@createWithGoogleAccount');
 Route::get('google/refreshGoogleAccessToken/{id}', 'GoogleController@refreshGoogleAccessToken');
 Route::get('google/getCalendars/{id}', 'GoogleController@getCalendars');
+Route::get('google/getCalendars', 'GoogleController@getCalendars');
 Route::get('google/pullEvents/{id}', 'GoogleController@pullEvents');
-Route::get('google/pullAllEvents/{id}', 'GoogleController@pullAllEvents');
+Route::get('google/pullEvents', 'GoogleController@pullEvents');
 
 Route::resource('user', 'UserController');
 Route::resource('event', 'GoogleEventController');

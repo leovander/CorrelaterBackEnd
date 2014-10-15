@@ -159,27 +159,26 @@ class GoogleController extends \BaseController
      * @return Response
      */
 
-    public function getCalendars($id)
+    public function getCalendars()
     {
-        //if(Auth::check()) {
-        //$id = Auth::user()->id;
-        $user = User::find($id);
+        if(Auth::check()) {
+            $id = Auth::user()->id;
+            $user = User::find($id);
 
-        //check to make sure the user access token is still valid
-        $ch =  curl_init('https://www.googleapis.com/calendar/v3/users/me/calendarList?access_token=' . $user->google_access_token);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        $calendars = curl_exec($ch);
-        $calendars = json_decode($calendars);
+            //check to make sure the user access token is still valid
+            $ch = curl_init('https://www.googleapis.com/calendar/v3/users/me/calendarList?access_token=' . $user->google_access_token);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            $calendars = curl_exec($ch);
+            $calendars = json_decode($calendars);
 
-        //if the user access token is not valid - 401 "Invalid Credentials" refresh the access token
-        if (isset($calendars->error->code)) {
-            if ($calendars->error->code == '401') {
-                $this->refreshGoogleAccessToken($id);
-                //TODO: ASK: the refresh function works, but user needs to call the function again after the function is refreshed. AJAX for php?
+            //if the user access token is not valid - 401 "Invalid Credentials" refresh the access token
+            if (isset($calendars->error->code)) {
+                if ($calendars->error->code == '401') {
+                    $this->refreshGoogleAccessToken($id);
+                }
             }
+            $calendars = (array)json_decode(file_get_contents('https://www.googleapis.com/calendar/v3/users/me/calendarList?access_token=' . $user->google_access_token));
         }
-        $calendars = (array)json_decode(file_get_contents('https://www.googleapis.com/calendar/v3/users/me/calendarList?access_token=' . $user->google_access_token));
-
 
         $cal_ids = array();
         if ($calendars !== false) {
