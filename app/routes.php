@@ -21,6 +21,7 @@ Route::get('user/logout', 'UserController@logout');
 Route::get('user/getFriendsNow', 'UserController@getFriendsNow');
 Route::get('user/getMyInfo', 'UserController@getMyInfo');
 Route::get('user/show/{id}', 'UserController@show');
+Route::get('user/getFriendsCount', 'UserController@getFriendsCount');
 
 Route::post('user/checkUserExists','UserController@checkUserExists');
 Route::get('user/addFriend/{id}','UserController@addFriend');
@@ -32,7 +33,6 @@ Route::get('user/getFriends', 'UserController@getFriends');
 //GOOGLE ROUTES
 Route::post('google/createWithGoogleAccount', 'GoogleController@createWithGoogleAccount');
 Route::get('google/refreshGoogleAccessToken/{id}', 'GoogleController@refreshGoogleAccessToken');
-Route::get('google/isValidGoogleToken/{id}', 'GoogleController@isValidGoogleToken');
 Route::get('google/getCalendars/{id}', 'GoogleController@getCalendars');
 Route::get('google/pullEvents/{id}', 'GoogleController@pullEvents');
 

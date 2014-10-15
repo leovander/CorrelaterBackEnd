@@ -1,8 +1,9 @@
 <?php
 
 /* TODO LIST:
- * Deny Friend Request
- * get a list of my friend's events and return if the ones who are free
+ * 1. Get a list of my friend's events and return if the ones who are free
+ * 2. Multiple invites: parse and see if they are in requests or email invites
+ * 4. Deny Friend Request
  */
 
 class UserController extends \BaseController {
@@ -33,7 +34,7 @@ class UserController extends \BaseController {
 	public function createAccount()
 	{
 		$response = array();
-		if($_POST['password']==$_POST['verify_password']){
+		if($_POST['password'] == $_POST['verify_password']){
 			$user = User::where('email', '=', $_POST['email'])->take(1)->get();
 			if($user->isEmpty()) {
 				$new_user = new User;
@@ -49,7 +50,7 @@ class UserController extends \BaseController {
 				    'password' => $_POST['password']
 				);
 				
-				if (Auth::attempt($credentials, true)) {
+				if(Auth::attempt($credentials, true)) {
 				    $response['message'] = 'Account Created';
 				}
 			} else if($user[0]->valid == 0) {
@@ -68,12 +69,11 @@ class UserController extends \BaseController {
 				if (Auth::attempt($credentials, true)) {
 				    $response['message'] = 'Account Created';
 				}
-			} else {
+			} else if($user[0]->valid == 1) {
 				$response['message'] = 'Email Taken';
 			}
 		}
-		else
-		{
+		else {
 			$response['message'] = 'Password Mismatch';
 		}
 
@@ -195,7 +195,28 @@ class UserController extends \BaseController {
 		header('Content-type: application/json');
 		return json_encode($response);
 	}
+	
+	//Delete/Reject a friend/friend request
+	public function deleteFriend($friendId)
+	{
+		if(Auth::check()) {
+			DB::table('friends')
+				->where('user_id','=',$friendId)
+				->where('friend_id', '=', Auth::user()->id)
+				->delete();
 
+			DB::table('friends')
+				->where('user_id','=',Auth::user()->id)
+				->where('friend_id', '=', $friendId)
+				->delete();
+
+			$response['message'] = 'Friend Deleted';
+		}
+
+		header('Content-type: application/json');
+		return json_encode($response);
+	}
+	
 	//Send email invitation for non-user
 	public function sendInvite()
 	{
@@ -210,8 +231,8 @@ class UserController extends \BaseController {
 				}
 			}
 
-			$data = array('first_name' => Auth::user()->first_name, 'email' => Auth::user()->email);
-			Mail::queue('emails.test', $data, function($message) {
+			$data = array('first_name' => ucfirst(Auth::user()->first_name), 'email' => Auth::user()->email);
+			Mail::queue('emails.invite', $data, function($message) {
 				$message->to($_POST['email'])
 					->subject("Welcome to I'm Free!");
 			});
@@ -243,6 +264,22 @@ class UserController extends \BaseController {
 			$response['message'] = 'Success';
 			$response['count'] = count($friends);
 			$response['friends'] = $friends;
+		}
+		else {
+			$response['message'] = 'Not Logged In';
+		}
+
+		header('Content-type: application/json');
+		return json_encode($response);
+	}
+	
+	public function getFriendsCount() {
+		if(Auth::check()) {
+			$count = Friend::where('user_id', '=', Auth::user()->id)
+						   ->where('friend_status', '=', 1)
+						   ->count();
+			$response['message'] = 'Success';
+			$response['count'] = $count;			
 		}
 		else {
 			$response['message'] = 'Not Logged In';
@@ -325,6 +362,25 @@ class UserController extends \BaseController {
 
 		header('Content-type: application/json');
 		return json_encode($response);
+	}
+	
+	//Set permanent Status, send 0 for setting to busy, anything else sets to available
+	public function setStatus($status)
+	{
+		if(Auth::check())
+		{
+			if($status == 1){
+				DB::table('users')
+					->where('id', '=', Auth::user()->id)
+					->update(array('status' => 1));
+	        }
+			else
+			{
+				DB::table('users')
+					->where('id', '=', Auth::user()->id)
+					->update(array('status' => 0));
+			}
+		}
 	}
 	
 	public function store()

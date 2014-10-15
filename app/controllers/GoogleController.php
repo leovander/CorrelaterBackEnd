@@ -19,13 +19,13 @@ class GoogleController extends \BaseController {
 	 * @return Response
 	 */
 	public function createWithGoogleAccount() {
+		$response = array();
 		if(isset($_POST['google_access_token'])) {
-
 			$profile = $this->getGoogleProfile($_POST['google_access_token']);
 
-            if ($profile !== false) {
-                $users = User::where('email', '=', $profile->email)->take(1)->get();
-                if ($users->isEmpty()) {
+            if($profile !== false) {
+                $user = User::where('email', '=', $profile->email)->take(1)->get();
+                if ($user->isEmpty()) {
                     $new_user = new User;
                     $new_user->google_access_token = $_POST['google_access_token'];
                     $new_user->google_refresh_token = $_POST['google_refresh_token'];
@@ -39,14 +39,16 @@ class GoogleController extends \BaseController {
                     $new_user->valid = 1;
                     $new_user->save();
 
-                $credentials = array(
-				  'email' => $profile->email,
-				  'password' => $profile->email
-				);
-
-				if (Auth::attempt($credentials, true)) {
-				    $response['message'] = 'Account Created';
-				}
+	                $credentials = array(
+					  'email' => $profile->email,
+					  'password' => $profile->email
+					);
+	
+					if(Auth::attempt($credentials, true)) {
+					    $response['message'] = 'Account Created';
+					} else {
+						$response['message'] = 'Could Not Login';
+					}		
                 } else {
                     $response['message'] = 'Email Taken';
                 }
@@ -59,7 +61,7 @@ class GoogleController extends \BaseController {
 		return json_encode($response);
 	}
 
-	public function getGoogleProfile ($access_token) {
+	public function getGoogleProfile($access_token) {
 		$request_url = 'https://www.googleapis.com/oauth2/v2/userinfo';
 		$profile = file_get_contents($request_url.'?access_token='.$access_token);
 
@@ -71,29 +73,6 @@ class GoogleController extends \BaseController {
 
 		return $profile;
 	}
-
-    //Helper function: Get Google Token Info for expiration time
-    public function isValidGoogleToken ($id) {
-        $user = User::find($id);
-
-        $request_url = 'https://www.googleapis.com/oauth2/v1/tokeninfo';
-        $profile = json_decode(file_get_contents($request_url.'?access_token='.$user->google_access_token));
-
-        if ($profile === false) {
-            return false;
-        } else {
-            //refresh the token if expiration time is less than 10 mins (600 secs)
-            if ((int)$profile->expires_in < 600) {
-                if ($this->refreshGoogleAccessToken($id)) {
-                    return true;
-                } else {
-                    return false;
-                }
-            } else {
-                return true;
-            }
-        }
-    }
 
     //Helper function: Refresh Google Access Token when the old Access Token expired
 	public function refreshGoogleAccessToken($id) {
@@ -118,10 +97,10 @@ class GoogleController extends \BaseController {
 			$user->google_id_token = $response->id_token;
 			$user->save();
             curl_close($ch);
-            return true;
+            print('refreshed token');
 		} else {
             curl_close($ch);
-            return false;
+            print('invalid token');
         }
 	}
 
