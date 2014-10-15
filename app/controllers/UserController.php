@@ -383,6 +383,21 @@ class UserController extends \BaseController {
 		}
 	}
 	
+	public function setMood()
+	{
+		$mood = $_POST['mood'];
+		
+		if(strlen($mood) >= 100)
+			$mood = substr($mood, 0, 100);
+		
+		if(Auth::check())
+		{
+			DB::table('users')
+				->where('id', '=', Auth::user()->id)
+				->update(array('mood' => $mood));
+		}
+	}
+	
 	public function store()
 	{
 		//
