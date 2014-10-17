@@ -359,7 +359,6 @@ class UserController extends \BaseController {
 		else {
 			$response['message'] = 'Not Logged In';
 		}
-
 		header('Content-type: application/json');
 		return json_encode($response);
 	}
