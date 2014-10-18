@@ -50,7 +50,32 @@ class GoogleController extends \BaseController
 						$response['message'] = 'Could Not Login';
 					}		
                 } else {
-                    $response['message'] = 'Email Taken';
+	                if($user[0]->valid == 0) {
+		            	$new_user = User::find($user[0]->id);
+		            	$new_user->google_access_token = $_POST['google_access_token'];
+	                    $new_user->google_refresh_token = $_POST['google_refresh_token'];
+	                    $new_user->google_id_token = $_POST['google_id_token'];
+	                    $new_user->google_code = $_POST['google_code'];
+	                    $new_user->password = Hash::make($profile->email);
+	                    $new_user->first_name = $profile->given_name;
+	                    $new_user->last_name = $profile->family_name;
+	                    $new_user->google_id = $profile->id;
+	                    $new_user->valid = 1;
+	                    $new_user->save();
+	
+		                $credentials = array(
+						  'email' => $new_user->email,
+						  'password' => $new_user->email
+						);
+		
+						if(Auth::attempt($credentials, true)) {
+						    $response['message'] = 'Account Created';
+						} else {
+							$response['message'] = 'Could Not Login';
+						}
+	                } else if($user[0]->valid == 1) {
+		            	$response['message'] = 'Email Taken';   
+	                }
                 }
             } else {
                 $response['message'] = 'Profile not created';

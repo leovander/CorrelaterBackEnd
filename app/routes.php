@@ -27,6 +27,7 @@ Route::get('user/getMyInfo', 'UserController@getMyInfo');
 Route::get('user/show/{id}', 'UserController@show');
 Route::get('user/getFriendsCount', 'UserController@getFriendsCount');
 Route::get('user/addFriend/{id}','UserController@addFriend');
+Route::get('user/deleteFriend/{id}','UserController@deleteFriend');
 Route::get('user/acceptFriend/{id}','UserController@acceptFriend');
 Route::get('user/getRequests', 'UserController@getRequests');
 Route::get('user/getFriends', 'UserController@getFriends');
