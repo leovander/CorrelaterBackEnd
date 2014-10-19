@@ -2,26 +2,15 @@
 
 class GoogleController extends \BaseController
 {
-
-    /**
-     * Display a listing of the resource.
-     *
-     * @return Response
-     */
-    public function index()
-    {
-        //
-    }
-
 	/**
 	 * Show the form for creating a new resource.
 	 *
 	 * @return Response
 	 */
-	public function createWithGoogleAccount() {
+	public function create() {
 		$response = array();
 		if(isset($_POST['google_access_token'])) {
-			$profile = $this->getGoogleProfile($_POST['google_access_token']);
+			$profile = $this->getProfile($_POST['google_access_token']);
 
             if($profile !== false) {
                 $user = User::where('email', '=', $profile->email)->take(1)->get();
@@ -85,8 +74,36 @@ class GoogleController extends \BaseController
         header('Content-type: application/json');
         return json_encode($response);
     }
+    
+    public function login(){
+		if(isset($_POST['google_access_token'])) {
+			$profile = $this->getProfile($_POST['google_access_token']);
 
-	public function getGoogleProfile($access_token) {
+            if($profile !== false) {
+				if(Auth::attempt(array('email' => $profile->email, 'password' => $profile->email), true))
+				{
+		            $id = Auth::user()->id;
+		            $user = User::find($id);
+					
+					$user->google_access_token = $_POST['google_access_token'];
+		            $user->google_refresh_token = $_POST['google_refresh_token'];
+		            $user->google_id_token = $_POST['google_id_token'];
+		            $user->google_code = $_POST['google_code'];
+		            $user->save();
+					
+					$response['message'] = 'Logged In';
+					$response['user'] = Auth::user();
+				} else {
+					$response['message'] = 'Email or Password is incorrect';
+				}
+			}
+		}
+
+		header('Content-type: application/json');
+		return json_encode($response);
+	}
+
+	public function getProfile($access_token) {
 		$request_url = 'https://www.googleapis.com/oauth2/v2/userinfo';
 		$profile = file_get_contents($request_url.'?access_token='.$access_token);
 
@@ -100,7 +117,7 @@ class GoogleController extends \BaseController
     }
 
     //Helper function: Get Google Token Info for expiration time
-    public function isValidGoogleToken($id)
+    public function isValidToken($id)
     {
         $user = User::find($id);
 
@@ -112,7 +129,7 @@ class GoogleController extends \BaseController
         } else {
             //refresh the token if expiration time is less than 10 mins (600 secs)
             if ((int)$profile->expires_in < 600) {
-                if ($this->refreshGoogleAccessToken($id)) {
+                if ($this->refreshToken($id)) {
                     return true;
                 } else {
                     return false;
@@ -124,7 +141,7 @@ class GoogleController extends \BaseController
     }
 
     //Helper function: Refresh Google Access Token when the old Access Token expired
-    public function refreshGoogleAccessToken($id)
+    public function refreshToken($id)
     {
         $user = User::find($id);
         $settings = Setting::where('source', '=', 'google')->get();
@@ -153,17 +170,6 @@ class GoogleController extends \BaseController
 			return false;
         }
     }
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @return Response
-     */
-    public function store()
-    {
-        //
-    }
-
 
     function get_my_url_contents($url)
     {
@@ -199,7 +205,7 @@ class GoogleController extends \BaseController
             //if the user access token is not valid - 401 "Invalid Credentials" refresh the access token
             if (isset($calendars->error->code)) {
                 if ($calendars->error->code == '401') {
-                    $this->refreshGoogleAccessToken($id);
+                    $this->refreshToken($id);
                 }
             }
             $calendars = (array)json_decode(file_get_contents('https://www.googleapis.com/calendar/v3/users/me/calendarList?access_token=' . $user->google_access_token));
@@ -237,7 +243,6 @@ class GoogleController extends \BaseController
                 //sync token to be saved later when pullEvents get called
             }
         }
-
     }
 
 	//Can be called with assumption that getCalendars ran successfully
@@ -560,47 +565,4 @@ class GoogleController extends \BaseController
             $new_event->save();
         }
     }
-
-
-    public function show($id)
-	{
-        //
-	}
-
-	/**
-	 * Show the form for editing the specified resource.
-	 *
-	 * @param  int  $id
-	 * @return Response
-	 */
-	public function edit($id)
-	{
-		//
-	}
-
-
-	/**
-	 * Update the specified resource in storage.
-	 *
-	 * @param  int  $id
-	 * @return Response
-	 */
-	public function update($id)
-	{
-		//
-	}
-
-
-	/**
-	 * Remove the specified resource from storage.
-	 *
-	 * @param  int  $id
-	 * @return Response
-	 */
-	public function destroy($id)
-	{
-		//
-	}
-
-
 }

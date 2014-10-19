@@ -370,6 +370,13 @@ class UserController extends \BaseController {
 			DB::table('users')
 				->where('id', '=', Auth::user()->id)
 				->update(array('mood' => $mood));
+				
+			$response['message'] = 'Mood Set';
+		} else {
+			$response['message'] = 'Mood Not Set';
 		}
+		
+		header('Content-type: application/json');
+		return json_encode($response);
 	}
 }

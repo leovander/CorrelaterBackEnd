@@ -14,7 +14,7 @@
 Route::get('/', 'HomeController@showWelcome');
 
 //USER ROUTES
-Route::post('user/createAccount', 'UserController@createAccount');
+Route::post('user/create', 'UserController@create');
 Route::post('user/login', 'UserController@login');
 Route::post('user/googleLogin', 'UserController@googleLogin');
 Route::post('user/checkUserExists','UserController@checkUserExists');
@@ -33,9 +33,9 @@ Route::get('user/getRequests', 'UserController@getRequests');
 Route::get('user/getFriends', 'UserController@getFriends');
 
 //GOOGLE ROUTES
-Route::post('google/createWithGoogleAccount', 'GoogleController@createWithGoogleAccount');
-Route::get('google/refreshGoogleAccessToken/{id}', 'GoogleController@refreshGoogleAccessToken');
-Route::get('google/getCalendars/{id}', 'GoogleController@getCalendars');
+Route::post('google/create', 'GoogleController@create');
+Route::post('google/login', 'GoogleController@login');
+Route::get('google/refreshToken/{id}', 'GoogleController@refreshToken');
 Route::get('google/getCalendars', 'GoogleController@getCalendars');
 Route::get('google/pullEvents/{id}', 'GoogleController@pullEvents');
 Route::get('google/pullEvents', 'GoogleController@pullEvents');
