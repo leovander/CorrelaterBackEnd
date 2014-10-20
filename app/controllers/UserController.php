@@ -7,50 +7,45 @@
  */
 
 class UserController extends \BaseController {
-	public function createAccount()
+	public function create()
 	{
 		$response = array();
-		if($_POST['password'] == $_POST['verify_password']){
-			$user = User::where('email', '=', $_POST['email'])->take(1)->get();
-			if($user->isEmpty()) {
-				$new_user = new User;
-				$new_user->first_name = $_POST['first_name'];
-				$new_user->last_name = $_POST['last_name'];
-				$new_user->email = $_POST['email'];
-				$new_user->password = Hash::make($_POST['password']);
-				$new_user->valid = 1;
-				$new_user->save();
+		$user = User::where('email', '=', $_POST['email'])->take(1)->get();
+		if($user->isEmpty()) {
+			$new_user = new User;
+			$new_user->first_name = $_POST['first_name'];
+			$new_user->last_name = $_POST['last_name'];
+			$new_user->email = $_POST['email'];
+			$new_user->password = Hash::make($_POST['password']);
+			$new_user->valid = 1;
+			$new_user->save();
 
-				$credentials = array(
-				    'email' => $_POST['email'],
-				    'password' => $_POST['password']
-				);
-				
-				if(Auth::attempt($credentials, true)) {
-				    $response['message'] = 'Account Created';
-				}
-			} else if($user[0]->valid == 0) {
-				$user = User::find($user[0]->id);
-				$user->first_name = $_POST['first_name'];
-				$user->last_name = $_POST['last_name'];
-				$user->password = Hash::make($_POST['password']);
-				$user->valid = 1;
-				$user->save();
-
-				$credentials = array(
-				    'email' => $user[0]->email,
-				    'password' => $_POST['password']
-				);
-				
-				if (Auth::attempt($credentials, true)) {
-				    $response['message'] = 'Account Created';
-				}
-			} else if($user[0]->valid == 1) {
-				$response['message'] = 'Email Taken';
+			$credentials = array(
+			    'email' => $_POST['email'],
+			    'password' => $_POST['password']
+			);
+			
+			if(Auth::attempt($credentials, true)) {
+			    $response['message'] = 'Account Created';
 			}
-		}
-		else {
-			$response['message'] = 'Password Mismatch';
+		} else if($user[0]->valid == 0) {
+			$user = User::find($user[0]->id);
+			$user->first_name = $_POST['first_name'];
+			$user->last_name = $_POST['last_name'];
+			$user->password = Hash::make($_POST['password']);
+			$user->valid = 1;
+			$user->save();
+
+			$credentials = array(
+			    'email' => $user[0]->email,
+			    'password' => $_POST['password']
+			);
+			
+			if (Auth::attempt($credentials, true)) {
+			    $response['message'] = 'Account Created';
+			}
+		} else if($user[0]->valid == 1) {
+			$response['message'] = 'Email Taken';
 		}
 
 		header('Content-type: application/json');
@@ -63,20 +58,7 @@ class UserController extends \BaseController {
 			$response['message'] = 'Logged In';
 			$response['user'] = Auth::user();
 		} else {
-			$response['message'] = 'Email or Password is incorrect';
-		}
-
-		header('Content-type: application/json');
-		return json_encode($response);
-	}
-	
-	public function googleLogin(){
-		if(Auth::attempt(array('email' => $_POST['email'], 'password' => $_POST['email']), true))
-		{
-			$response['message'] = 'Logged In';
-			$response['user'] = Auth::user();
-		} else {
-			$response['message'] = 'Email or Password is incorrect';
+			$response['message'] = 'Email or Password Incorrect';
 		}
 
 		header('Content-type: application/json');
@@ -322,7 +304,7 @@ class UserController extends \BaseController {
 		if(Auth::check()) {
 			$friends = DB::table('users')
         				->join('friends', 'users.id', '=', 'friends.user_id')
-	        			->select('users.id', 'users.first_name', 'users.last_name')
+	        			->select('users.id', 'users.first_name', 'users.last_name', 'users.mood')
 	        			->orderBy('users.first_name', 'asc')
 						->where('friends.friend_id', '=', Auth::user()->id)
 	        			->where('friends.friend_status','=',1)
@@ -340,7 +322,7 @@ class UserController extends \BaseController {
 	}
 	
 	//Set permanent Status, send 0 for setting to busy, anything else sets to available
-	public function setStatus($status)
+	public function setAvailability($status)
 	{
 		if(Auth::check())
 		{
@@ -356,6 +338,10 @@ class UserController extends \BaseController {
 					->update(array('status' => 0));
 			}
 		}
+		
+		$response['message'] = "Availability Set";
+		header('Content-type: application/json');
+		return json_encode($response);
 	}
 	
 	public function setMood()
