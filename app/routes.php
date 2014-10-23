@@ -35,6 +35,7 @@ Route::get('user/logout', 'UserController@logout');
 //LIST
 Route::get('user/getFriends', 'UserController@getFriends');
 Route::get('user/getFriendsNow', 'UserController@getFriendsNow');
+Route::get('user/getAvailable', 'UserController@getAvailable');
 Route::get('user/getRequests', 'UserController@getRequests');
 Route::get('user/getFriendsCount', 'UserController@getFriendsCount');
 
