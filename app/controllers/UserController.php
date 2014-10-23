@@ -308,7 +308,7 @@ class UserController extends \BaseController {
 	        			->orderBy('users.first_name', 'asc')
 						->where('friends.friend_id', '=', Auth::user()->id)
 	        			->where('friends.friend_status','=',1)
-	        			->where('users.status','=',1)
+	        			->whereIn('users.status', array(1, 2))
 						->get();
 			$response['message'] = 'Success';
 			$response['count'] = count($friends);
@@ -321,21 +321,27 @@ class UserController extends \BaseController {
 		return json_encode($response);
 	}
 	
-	//Set permanent Status, send 0 for setting to busy, anything else sets to available
+	//2 makes the user available no matter what, 1 uses the times in schedule, and 0 doesn't show the current user at all
 	public function setAvailability($status)
 	{
 		if(Auth::check())
 		{
-			if($status == 1){
+			if($status == 1){ //based on schedule
 				DB::table('users')
 					->where('id', '=', Auth::user()->id)
 					->update(array('status' => 1));
 	        }
-			else
+			else if($status == 0) //invisible
 			{
 				DB::table('users')
 					->where('id', '=', Auth::user()->id)
 					->update(array('status' => 0));
+			}
+			else //completely free
+			{
+				DB::table('users')
+					->where('id', '=', Auth::user()->id)
+					->update(array('status' => 2));
 			}
 		}
 		
