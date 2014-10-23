@@ -16,6 +16,7 @@ Route::get('/', 'HomeController@showWelcome');
 //USER
 Route::post('user/create', 'UserController@create');
 Route::post('google/create', 'GoogleController@create');
+Route::post('facebook/create', 'FacebookController@create');
 Route::get('user/getMyInfo', 'UserController@getMyInfo');
 Route::get('user/setAvailability/{status}', 'UserController@setAvailability');
 Route::post('user/setMood', 'UserController@setMood');
@@ -30,6 +31,7 @@ Route::get('user/deleteFriend/{id}','UserController@deleteFriend');
 //SESSION
 Route::post('user/login', 'UserController@login');
 Route::post('google/login', 'GoogleController@login');
+Route::post('facebook/login', 'FacebookController@login');
 Route::get('user/logout', 'UserController@logout');
 
 //LIST
