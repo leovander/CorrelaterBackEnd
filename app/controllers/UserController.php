@@ -302,7 +302,9 @@ class UserController extends \BaseController {
 
             $today = date("Y-m-d");
             $now = date("H:i:s");
-            if (isset($friendsOneId)) {
+            $busyFriendsId = array();
+            
+            if (!empty($friendsOneId)) {
                 $busyFriends = DB::table('events')
                     ->select('events.id', 'events.user_id')
                     ->whereIn('events.user_id', $friendsOneId)
@@ -310,8 +312,7 @@ class UserController extends \BaseController {
                     ->where('events.start_time', '<', $now)
                     ->where('events.end_time', '>', $now)
                     ->get();
-
-                $busyFriendsId = array();
+                    
                 foreach ($busyFriends as $people) {
                     array_push($busyFriendsId, $people->user_id);
                 }
@@ -319,7 +320,7 @@ class UserController extends \BaseController {
 
             $friendsOneAvailableId = array_diff($friendsOneId, $busyFriendsId);
 
-            if (isset($firendOneAvailableId)) {
+            if (!empty($firendOneAvailableId)) {
                 //find only the available friends (schedule) based on the friendsOneAvailableId
                 $friendsOneAvailable = DB::table('users')
                     ->select('users.id', 'users.first_name', 'users.last_name', 'users.mood')
@@ -331,13 +332,14 @@ class UserController extends \BaseController {
                 $allAvailableFriends = array_merge($friendsTwo, $friendsOneAvailable);
             }
 
-            if (isset($allAvailableFriends)) {
+            if (!empty($allAvailableFriends)) {
                 $response['message'] = 'Success';
                 $response['count'] = count($allAvailableFriends);
                 $response['friends'] = $allAvailableFriends;
             } else {
                 $response['message'] = 'Fail';
                 $response['count'] = 0;
+                $response['friends'] = "";
             }
 
         }
