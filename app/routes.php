@@ -37,6 +37,7 @@ Route::post('google/create', 'GoogleController@create');
 Route::post('google/login', 'GoogleController@login');
 Route::get('google/refreshToken/{id}', 'GoogleController@refreshToken');
 Route::get('google/getCalendars', 'GoogleController@getCalendars');
+Route::post('google/confirmCalendars', 'GoogleController@confirmCalendars');
 Route::get('google/pullEvents/{id}', 'GoogleController@pullEvents');
 Route::get('google/pullEvents', 'GoogleController@pullEvents');
 
