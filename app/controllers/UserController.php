@@ -330,6 +330,8 @@ class UserController extends \BaseController {
                 $allAvailFriends = array();
 
                 $allAvailableFriends = array_merge($friendsTwo, $friendsOneAvailable);
+            } else {
+	            $allAvailableFriends = $friendsTwo;
             }
 
             if (!empty($allAvailableFriends)) {

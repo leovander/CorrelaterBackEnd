@@ -7,11 +7,13 @@
 	<body>
 		<h1>Hi there!</h1>
 		<h2>
-			{{ $first_name }} (<a href="mailto:{{ $email }}">{{ $email }}</a>) has invited you to <strong>I'm Free</strong>.
+			{{ $first_name }} (<a href="mailto:{{ $email }}">{{ $email }}</a>) has invited you to <strong>Corral</strong>.
 		</h2>
 		<h2>Get Started:</h2>
 		<ol>
-			<li>Download I'm Free</li>
+			<li>Download Corral</li>
+			<li>Import Events</li>
+			<li>Start Corraling!</li>
 		</ol>
 		<p>
 			Hope to see you soon!
