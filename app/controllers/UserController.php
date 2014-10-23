@@ -302,36 +302,47 @@ class UserController extends \BaseController {
 
             $today = date("Y-m-d");
             $now = date("H:i:s");
+            if (isset($friendsOneId)) {
+                $busyFriends = DB::table('events')
+                    ->select('events.id', 'events.user_id')
+                    ->whereIn('events.user_id', $friendsOneId)
+                    ->where('events.start_date', '=', $today)
+                    ->where('events.start_time', '<', $now)
+                    ->where('events.end_time', '>', $now)
+                    ->get();
 
-            $busyFriends = DB::table('events')
-                            ->select('events.id', 'events.user_id')
-                            ->whereIn('events.user_id', $friendsOneId)
-                            ->where('events.start_date', '=', $today)
-                            ->where('events.start_time', '<', $now)
-                            ->where('events.end_time', '>', $now)
-                            ->get();
-
-            $busyFriendsId = array();
-            foreach ($busyFriends as $people) {
-                array_push($busyFriendsId, $people->user_id);
+                $busyFriendsId = array();
+                foreach ($busyFriends as $people) {
+                    array_push($busyFriendsId, $people->user_id);
+                }
             }
 
             $friendsOneAvailableId = array_diff($friendsOneId, $busyFriendsId);
 
-            //find only the available friends (schedule) based on the friendsOneAvailableId
-            $friendsOneAvailable = DB::table('users')
-                ->select('users.id', 'users.first_name', 'users.last_name', 'users.mood')
-                ->whereIn('users.id', $friendsOneAvailableId)
-                ->get();
+            if (isset($firendOneAvailableId)) {
+                //find only the available friends (schedule) based on the friendsOneAvailableId
+                $friendsOneAvailable = DB::table('users')
+                    ->select('users.id', 'users.first_name', 'users.last_name', 'users.mood')
+                    ->whereIn('users.id', $friendsOneAvailableId)
+                    ->get();
 
-            $allAvailFriends = array();
+                $allAvailFriends = array();
 
-            $allAvailableFriends = array_merge($friendsTwo, $friendsOneAvailable);
+                $allAvailableFriends = array_merge($friendsTwo, $friendsOneAvailable);
+            }
+
+            if (isset($allAvailableFriends)) {
+                $response['message'] = 'Success';
+                $response['count'] = count($allAvailableFriends);
+                $response['friends'] = $allAvailableFriends;
+            } else {
+                $response['message'] = 'Fail';
+                $response['count'] = 0;
+            }
+
         }
 
-		$response['message'] = 'Success';
-		$response['count'] = count($allAvailableFriends);
-		$response['friends'] = $allAvailableFriends;
+
 
 //		header('Content-type: application/json');
 		return json_encode($response);
