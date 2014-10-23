@@ -320,7 +320,7 @@ class UserController extends \BaseController {
 
             $friendsOneAvailableId = array_diff($friendsOneId, $busyFriendsId);
 
-            if (!empty($firendOneAvailableId)) {
+            if (!empty($friendsOneAvailableId)) {
                 //find only the available friends (schedule) based on the friendsOneAvailableId
                 $friendsOneAvailable = DB::table('users')
                     ->select('users.id', 'users.first_name', 'users.last_name', 'users.mood')
