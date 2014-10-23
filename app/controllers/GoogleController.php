@@ -67,7 +67,7 @@ class GoogleController extends \BaseController
 	                }
                 }
             } else {
-                $response['message'] = 'Profile not created';
+                $response['message'] = 'Profile Not Created';
             }
         }
 
@@ -94,7 +94,7 @@ class GoogleController extends \BaseController
 					$response['message'] = 'Logged In';
 					$response['user'] = Auth::user();
 				} else {
-					$response['message'] = 'Email or Password is incorrect';
+					$response['message'] = 'Email or Password Incorrect';
 				}
 			}
 		}

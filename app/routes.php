@@ -13,33 +13,37 @@
 
 Route::get('/', 'HomeController@showWelcome');
 
-//USER ROUTES
+//USER
 Route::post('user/create', 'UserController@create');
-Route::post('user/login', 'UserController@login');
-Route::post('user/googleLogin', 'UserController@googleLogin');
-Route::post('user/checkUserExists','UserController@checkUserExists');
-Route::post('user/setMood', 'UserController@setMood');
-Route::post('user/sendInvite', 'UserController@sendInvite');
-
-Route::get('user/logout', 'UserController@logout');
-Route::get('user/getFriendsNow', 'UserController@getFriendsNow');
-Route::get('user/getMyInfo', 'UserController@getMyInfo');
-Route::get('user/show/{id}', 'UserController@show');
-Route::get('user/getFriendsCount', 'UserController@getFriendsCount');
-Route::get('user/addFriend/{id}','UserController@addFriend');
-Route::get('user/deleteFriend/{id}','UserController@deleteFriend');
-Route::get('user/acceptFriend/{id}','UserController@acceptFriend');
-Route::get('user/getRequests', 'UserController@getRequests');
-Route::get('user/getFriends', 'UserController@getFriends');
-
-//GOOGLE ROUTES
 Route::post('google/create', 'GoogleController@create');
+Route::get('user/getMyInfo', 'UserController@getMyInfo');
+Route::get('user/setAvailability/{status}', 'UserController@setAvailability');
+Route::post('user/setMood', 'UserController@setMood');
+
+//FRIEND
+Route::post('user/checkUserExists','UserController@checkUserExists');
+Route::post('user/sendInvite', 'UserController@sendInvite');
+Route::get('user/addFriend/{id}','UserController@addFriend');
+Route::get('user/acceptFriend/{id}','UserController@acceptFriend');
+Route::get('user/deleteFriend/{id}','UserController@deleteFriend');
+
+//SESSION
+Route::post('user/login', 'UserController@login');
 Route::post('google/login', 'GoogleController@login');
-Route::get('google/refreshToken/{id}', 'GoogleController@refreshToken');
+Route::get('user/logout', 'UserController@logout');
+
+//LIST
+Route::get('user/getFriends', 'UserController@getFriends');
+Route::get('user/getFriendsNow', 'UserController@getFriendsNow');
+Route::get('user/getRequests', 'UserController@getRequests');
+Route::get('user/getFriendsCount', 'UserController@getFriendsCount');
+
+//SCHEDULE
 Route::get('google/getCalendars', 'GoogleController@getCalendars');
 Route::post('google/confirmCalendars', 'GoogleController@confirmCalendars');
 Route::get('google/pullEvents/{id}', 'GoogleController@pullEvents');
 Route::get('google/pullEvents', 'GoogleController@pullEvents');
+Route::get('google/refreshToken/{id}', 'GoogleController@refreshToken');
 
 Route::resource('user', 'UserController');
 Route::resource('event', 'GoogleEventController');
