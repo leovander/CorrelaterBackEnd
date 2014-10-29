@@ -1,9 +1,9 @@
 <?php
 
 /* TODO LIST:
- * 1. Get a list of my friend's events and return if the ones who are free
- * 2. Multiple invites: parse and see if they are in requests or email invites
- * 4. Deny Friend Request
+	1. Favoriting 
+	2. Nudge - Sending/receiving/accept or decline/some feedback to sender on nudge
+	3. Set availability for a set period of time
  */
 
 class UserController extends \BaseController {
@@ -192,7 +192,7 @@ class UserController extends \BaseController {
 			$data = array('first_name' => ucfirst(Auth::user()->first_name), 'email' => Auth::user()->email);
 			Mail::queue('emails.invite', $data, function($message) {
 				$message->to($_POST['email'])
-					->subject("Welcome to I'm Free!");
+					->subject("Welcome to Corral!");
 			});
 			$response['message'] = 'Sent';
 		}
@@ -213,10 +213,10 @@ class UserController extends \BaseController {
 	{
 		if(Auth::check()) {
 			$friends = DB::table('users')
-        				->join('friends', 'users.id', '=', 'friends.user_id')
-	        			->select('users.id', 'users.first_name', 'users.last_name')
+        				->join('friends', 'users.id', '=', 'friends.friend_id')
+	        			->select('users.id', 'users.first_name', 'users.last_name', 'friends.favorite')
 	        			->orderBy('users.first_name', 'asc')
-						->where('friends.friend_id', '=', Auth::user()->id)
+						->where('friends.user_id', '=', Auth::user()->id)
 	        			->where('friends.friend_status','=',1)
 						->get();
 			$response['message'] = 'Success';
@@ -425,4 +425,30 @@ class UserController extends \BaseController {
 		header('Content-type: application/json');
 		return json_encode($response);
 	}
+	
+	public function setFavorite($friendId)
+	{
+		if(Auth::check()) {
+			$ifFav = 0;
+			$favorite = DB::table('friends')
+				->where('user_id', '=', Auth::user()->id)
+				->where('friend_id', '=', $friendId)
+				->get();
+			if($favorite[0]->favorite == 0) {
+				$ifFav = 1;
+				$response['message'] = 'Favorited';
+			} else {
+				$response['message'] = 'Not Favorited';
+			}
+
+			DB::table('friends')
+				->where('user_id', '=', Auth::user()->id)
+				->where('friend_id', '=', $friendId)
+				->update(array('favorite' => $ifFav));
+		}
+
+		header('Content-type: application/json');
+		return json_encode($response);
+	}
+	
 }
