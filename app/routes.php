@@ -27,6 +27,7 @@ Route::post('user/sendInvite', 'UserController@sendInvite');
 Route::get('user/addFriend/{id}','UserController@addFriend');
 Route::get('user/acceptFriend/{id}','UserController@acceptFriend');
 Route::get('user/deleteFriend/{id}','UserController@deleteFriend');
+Route::get('user/setFavorite/{id}','UserController@setFavorite');
 
 //SESSION
 Route::post('user/login', 'UserController@login');
@@ -40,6 +41,7 @@ Route::get('user/getFriendsNow', 'UserController@getFriendsNow');
 Route::get('user/getAvailable', 'UserController@getAvailable');
 Route::get('user/getRequests', 'UserController@getRequests');
 Route::get('user/getFriendsCount', 'UserController@getFriendsCount');
+Route::get('user/getNudges', 'UserController@getNudges');
 
 //SCHEDULE
 Route::get('google/getCalendars', 'GoogleController@getCalendars');
@@ -54,3 +56,5 @@ Route::get('google/getContacts', 'GoogleController@getContacts');
 Route::resource('user', 'UserController');
 Route::resource('event', 'GoogleEventController');
 Route::resource('google_calendar', 'GoogleCalendarController');
+
+

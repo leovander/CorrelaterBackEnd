@@ -1,9 +1,9 @@
 <?php
 
 /* TODO LIST:
- * 1. Get a list of my friend's events and return if the ones who are free
- * 2. Multiple invites: parse and see if they are in requests or email invites
- * 4. Deny Friend Request
+	1. Favoriting 
+	2. Nudge - Sending/receiving/accept or decline/some feedback to sender on nudge
+	3. Set availability for a set period of time
  */
 
 class UserController extends \BaseController {
@@ -192,7 +192,7 @@ class UserController extends \BaseController {
 			$data = array('first_name' => ucfirst(Auth::user()->first_name), 'email' => Auth::user()->email);
 			Mail::queue('emails.invite', $data, function($message) {
 				$message->to($_POST['email'])
-					->subject("Welcome to I'm Free!");
+					->subject("Welcome to Corral!");
 			});
 			$response['message'] = 'Sent';
 		}
@@ -213,10 +213,11 @@ class UserController extends \BaseController {
 	{
 		if(Auth::check()) {
 			$friends = DB::table('users')
-        				->join('friends', 'users.id', '=', 'friends.user_id')
-	        			->select('users.id', 'users.first_name', 'users.last_name')
-	        			->orderBy('users.first_name', 'asc')
-						->where('friends.friend_id', '=', Auth::user()->id)
+        				->join('friends', 'users.id', '=', 'friends.friend_id')
+	        			->select('users.id', 'users.first_name', 'users.last_name', 'friends.favorite')
+	        			->orderBy('friends.favorite', 'desc')
+						->orderBy('users.first_name', 'asc')
+						->where('friends.user_id', '=', Auth::user()->id)
 	        			->where('friends.friend_status','=',1)
 						->get();
 			$response['message'] = 'Success';
@@ -277,19 +278,21 @@ class UserController extends \BaseController {
         if (Auth::check()) {
             //2-free, 1-schedule, 1-busy(invisible)
             $friendsTwo = DB::table('users')
-                            ->join('friends', 'users.id', '=', 'friends.user_id')
-                            ->select('users.id', 'users.first_name', 'users.last_name', 'users.mood')
+                            ->join('friends', 'users.id', '=', 'friends.friend_id')
+                            ->select('users.id', 'users.first_name', 'users.last_name', 'users.mood', 'friends.favorite')
+                        	->orderBy('friends.favorite', 'desc')    
                             ->orderBy('users.first_name', 'asc')
-                            ->where('friends.friend_id', '=', Auth::user()->id)
+                            ->where('friends.user_id', '=', Auth::user()->id)
                             ->where('friends.friend_status','=',1)
                             ->where('users.status', '=', 2)
                             ->get();
 
             $friendsOne = DB::table('users')
-                            ->join('friends', 'users.id', '=', 'friends.user_id')
-                            ->select('users.id', 'users.first_name', 'users.last_name', 'users.mood')
+                            ->join('friends', 'users.id', '=', 'friends.friend_id')
+                            ->select('users.id', 'users.first_name', 'users.last_name', 'users.mood', 'friends.favorite')
+                            ->orderBy('friends.favorite', 'desc')
                             ->orderBy('users.first_name', 'asc')
-                            ->where('friends.friend_id', '=', Auth::user()->id)
+                            ->where('friends.user_id', '=', Auth::user()->id)
                             ->where('friends.friend_status','=',1)
                             ->where('users.status', '=', 1)
                             ->get();
@@ -323,8 +326,14 @@ class UserController extends \BaseController {
             if (!empty($friendsOneAvailableId)) {
                 //find only the available friends (schedule) based on the friendsOneAvailableId
                 $friendsOneAvailable = DB::table('users')
-                    ->select('users.id', 'users.first_name', 'users.last_name', 'users.mood')
+                    ->join('friends', 'users.id', '=', 'friends.friend_id')
+                    ->select('users.id', 'users.first_name', 'users.last_name', 'users.mood', 'friends.favorite')
+                    ->orderBy('friends.favorite', 'desc')
+                    ->orderBy('users.first_name', 'asc')
                     ->whereIn('users.id', $friendsOneAvailableId)
+                    ->where('friends.user_id', '=', Auth::user()->id)
+                    ->where('friends.friend_status','=',1)
+                    ->where('users.status', '=', 1)
                     ->get();
 
                 $allAvailFriends = array();
@@ -425,4 +434,53 @@ class UserController extends \BaseController {
 		header('Content-type: application/json');
 		return json_encode($response);
 	}
+	
+	public function setFavorite($friendId)
+	{
+		if(Auth::check()) {
+			$ifFav = 0;
+			$favorite = DB::table('friends')
+				->where('user_id', '=', Auth::user()->id)
+				->where('friend_id', '=', $friendId)
+				->get();
+			if($favorite[0]->favorite == 0) {
+				$ifFav = 1;
+				$response['message'] = 'Favorited';
+			} else {
+				$response['message'] = 'Not Favorited';
+			}
+
+			DB::table('friends')
+				->where('user_id', '=', Auth::user()->id)
+				->where('friend_id', '=', $friendId)
+				->update(array('favorite' => $ifFav));
+		}
+
+		header('Content-type: application/json');
+		return json_encode($response);
+	}
+	
+	public function getNudges()
+	{
+		if(Auth::check()) {
+			$nudges = DB::table('users')
+        				->join('nudges', 'users.id', '=', 'nudges.sender_id')
+						->join('friends', 'friends.user_id', '=', 'users.id')
+	        			->select('nudges.messages', 'users.first_name', 'users.last_name')
+						->where('friends.friend_id', '=', Auth::user()->id)
+						->where('nudges.receiver_id', '=', Auth::user()->id)
+	        			->where('friends.friend_status','=',1)
+						->get();
+			$response['message'] = 'Success';
+			$response['count'] = count($nudges);
+			$response['friends'] = $nudges;
+		}
+		else {
+			$response['message'] = 'Not Logged In';
+		}
+
+		header('Content-type: application/json');
+		return json_encode($nudges);
+	}
+	
 }
