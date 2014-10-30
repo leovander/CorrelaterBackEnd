@@ -483,4 +483,17 @@ class UserController extends \BaseController {
 		return json_encode($nudges);
 	}
 	
+	//TODO
+	public function googleLogin(){
+		if(Auth::attempt(array('email' => $_POST['email'], 'password' => $_POST['email']), true))
+		{
+			$response['message'] = 'Logged In';
+			$response['user'] = Auth::user();
+		} else {
+			$response['message'] = 'Email or Password is incorrect';
+		}
+
+		header('Content-type: application/json');
+		return json_encode($response);
+	}
 }
