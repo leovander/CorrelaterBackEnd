@@ -42,6 +42,7 @@ Route::get('user/getAvailable', 'UserController@getAvailable');
 Route::get('user/getRequests', 'UserController@getRequests');
 Route::get('user/getFriendsCount', 'UserController@getFriendsCount');
 Route::get('user/getNudges', 'UserController@getNudges');
+Route::post('user/setNudges', 'UserController@setNudges');
 
 //SCHEDULE
 Route::get('google/getCalendars', 'GoogleController@getCalendars');

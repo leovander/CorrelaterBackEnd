@@ -604,6 +604,11 @@ class GoogleController extends \BaseController
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             $contacts = curl_exec($ch);
             $contacts = json_decode($contacts);
+            if (isset($contacts->error->code )) {
+                if ($contacts->error->code == '401') {
+                    $this->refreshToken($id);
+                }
+            }
 
             $emailAddresses = array();
             foreach ($contacts->feed->entry as $entry) {

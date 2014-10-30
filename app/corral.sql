@@ -103,7 +103,7 @@ CREATE TABLE nudges (
   id int(11) NOT NULL AUTO_INCREMENT,
   sender_id int(11) DEFAULT NULL,
   receiver_id int(11) DEFAULT NULL,
-  messages varchar(50) DEFAULT NULL,
+  message varchar(50) DEFAULT NULL,
   created_at datetime DEFAULT NULL,
   updated_at datetime DEFAULT NULL,
   PRIMARY KEY (id),

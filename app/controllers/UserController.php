@@ -466,7 +466,7 @@ class UserController extends \BaseController {
 			$nudges = DB::table('users')
         				->join('nudges', 'users.id', '=', 'nudges.sender_id')
 						->join('friends', 'friends.user_id', '=', 'users.id')
-	        			->select('nudges.messages', 'users.first_name', 'users.last_name')
+	        			->select('nudges.message', 'users.first_name', 'users.last_name')
 						->where('friends.friend_id', '=', Auth::user()->id)
 						->where('nudges.receiver_id', '=', Auth::user()->id)
 	        			->where('friends.friend_status','=',1)
@@ -482,5 +482,69 @@ class UserController extends \BaseController {
 		header('Content-type: application/json');
 		return json_encode($nudges);
 	}
+
+    public function setNudges() {
+        $message = $_POST['message'];
+        $receiverId = $_POST['receiver_id'];
+        if(strlen($message) >= 50) {
+            $message = substr($message, 0, 50);
+        }
+
+        if(Auth::check()) {
+            $check = $this->isNudgeSet($receiverId);
+
+            //if nudge exist from the sender to the user, update the message
+            if($check["message"] === "Previously Set") {
+                DB::table('nudges')
+                    ->where('sender_id', '=', Auth::user()->id)
+                    ->where('receiver_id', '=', $receiverId)
+                    ->update(array('message' => $message));
+                $response['message'] = 'Update nudge';
+            //else save the nudge
+            } else {
+                $new_nudge = new Nudge();
+                $new_nudge->sender_id = Auth::user()->id;
+                $new_nudge->receiver_id = $receiverId;
+                $new_nudge->message = $message;
+                $new_nudge->save();
+                $response['message'] = 'Set nudge';
+            }
+        }
+
+        //header('Content-type: application/json');
+        return json_encode($response);
+    }
+
+    public function deleteNudge($senderId) {
+        if(Auth::check()) {
+            DB::table('nudges')
+                ->where('sender_id', '=', $senderId)
+                ->where('receiver_id', '=', Auth::user()->id)
+                ->delete() ;
+            $response['message'] = 'Nudge Deleted';
+        }
+        header('Content-type: application/json');
+        return json_encode($response);
+    }
+
+    //Check to see if user already sent nudge to the receiverId
+    public function isNudgeSet($receiverId) {
+        if (Auth::check()) {
+            $nudge = DB::table('nudges')
+                        ->select('sender_id', 'receiver_id')
+                        ->where('sender_id', '=', Auth::user()->id)
+                        ->where('receiver_id', '=', $receiverId)
+                        ->take(1)
+                        ->get();
+
+            if(!empty($nudge)) {
+                $response['message'] = 'Previously Set';
+            } else {
+                $response['message'] = 'Not Set';
+            }
+        }
+
+        return $response;
+    }
 	
 }
