@@ -78,4 +78,23 @@ class FacebookController extends \BaseController
 		header('Content-type: application/json');
 		return json_encode($response);
 	}
+	
+	public function getAccessToken() {
+		$settings = Setting::where('source', '=', 'facebook')->get();
+		
+		if(Auth::check()) {
+			$user = User::find(Auth::user()->id);
+			
+			
+			$isValid = json_decode(file_get_contents('https://graph.facebook.com/debug_token?'.
+						'input_token=CAAVCYmVk1zEBAIF8IPc3LEQtnesiOvCNh8KvoK93giztNGrywb0wiGxW3BbY3HY4s8ToCLJLSSGL4CvJcBvZA57XGqZBF88AUeWx6uLYz94zkz32qEmw7OpPDNI0kLZCgTvGQZBmJGMVOPrxZBneA2YZBFy12clqfeEPolJBRCZCZCYNQCmQ4IYjhTOkQiiueRFBpSh6cJjgNbZBfAXiStlwS'.
+						'&access_token='.$user->facebook_token));
+
+			if($isValid->data->is_valid == 1) {
+				$events = json_decode(file_get_contents('https://graph.facebook.com/v2.1/me?access_token='.$user->facebook_token.'&fields=events'));
+			
+				Helpers::pr($events->events->data);
+			}
+		}
+	}
 }
