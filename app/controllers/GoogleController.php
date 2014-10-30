@@ -208,12 +208,17 @@ class GoogleController extends \BaseController
                     $this->refreshToken($id);
                 }
             }
-            $calendars = (array)json_decode(file_get_contents('https://www.googleapis.com/calendar/v3/users/me/calendarList?access_token=' . $user->google_access_token));
+            //TODO: modify for testing
+//            $calendars = (array)json_decode(file_get_contents('https://www.googleapis.com/calendar/v3/users/me/calendarList?access_token=' . $user->google_access_token));
+            $ch = curl_init('https://www.googleapis.com/calendar/v3/users/me/calendarList?access_token=' . $user->google_access_token);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            $calendars = curl_exec($ch);
+            $calendars = json_decode($calendars);
         }
 
         $cal_ids = array();
         if ($calendars !== false) {
-            foreach ($calendars['items'] as $calendar) {
+            foreach ($calendars->items as $calendar) {
                 if ($calendar->accessRole == "owner") {
                     array_push($cal_ids, array('id' => $calendar->id, 'user_id' => $id,'name' => $calendar->summary));
                 }
@@ -305,7 +310,7 @@ class GoogleController extends \BaseController
             $startDate = date("Y-m-d");
             $startDate = $startDate . 'T00:00:00Z';
             $today = strtotime((date("Y-m-d")));
-            $endDate = date("Y-m-d", strtotime("+1 month", $today));
+            $endDate = date("Y-m-d", strtotime("+1 month", $today)); //only pull events one month from today's date
             $endDate = $endDate . 'T23:59:59Z';
 
 
@@ -588,5 +593,62 @@ class GoogleController extends \BaseController
             $new_event->end_time = $cal_event['end_time'];
             $new_event->save();
         }
+    }
+
+    public function getContacts () {
+        if(Auth::check()) {
+            $id = Auth::user()->id;
+            $user = User::find($id);
+
+            $ch = curl_init('https://www.google.com/m8/feeds/contacts/'.$user->email.'/full?v=3.0&alt=json&max-results=5000&access_token=' . $user->google_access_token);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            $contacts = curl_exec($ch);
+            $contacts = json_decode($contacts);
+
+            $emailAddresses = array();
+            foreach ($contacts->feed->entry as $entry) {
+                if (isset($entry->{'gd$email'})) { //only those have email
+                    if (!empty($entry->title->{'$t'})) { //only those have name
+                        if (strpos($entry->title->{'$t'}, '@') !== FALSE) {
+                            $names = explode('@', $entry->title->{'$t'});
+                            $firstName = $names[0];
+                            $lastInitial = "";
+                        } else {
+                            $names = explode(' ', $entry->title->{'$t'});
+                            $firstName = $names[0];
+                            $lastInitial = "";
+                            if (sizeof($names) > 1) {
+                                $lastInitial = strtoupper(substr($names[sizeof($names) - 1], 0, 1));
+                            }
+                        }
+                        foreach ($entry->{'gd$email'} as $email) {
+                            if (isset($email->rel)) { //type of email
+                                if ($email->rel == 'http://schemas.google.com/g/2005#home') {
+                                    array_push($emailAddresses, array(
+                                        'firstName' => $firstName,
+                                        'lastInitial' => $lastInitial,
+                                        'email' => $email->address, 'type' => 'home'));
+                                    break;
+                                }
+                                if ($email->rel == 'http://schemas.google.com/g/2005#other') {
+                                    array_push($emailAddresses, array(
+                                        'firstName' => $firstName,
+                                        'lastInitial' => $lastInitial,
+                                        'email' => $email->address, 'type' => 'other'));
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            $response['message'] = 'Success';
+            $response['emails'] = $emailAddresses;
+        }
+        else {
+            $response['message'] = 'Not Logged In';
+        }
+        header('Content-type: application/json');
+        return json_encode($response);
     }
 }

@@ -30,7 +30,7 @@ CREATE TABLE users (
   google_id_token varchar(255) DEFAULT NULL,
   google_code varchar(255) DEFAULT NULL,
   status tinyint(1) DEFAULT '1',
-  mood varchar(100) DEFAULT NULL,
+  mood varchar(50) DEFAULT NULL,
   created_at datetime NOT NULL,
   updated_at datetime NOT NULL,
   PRIMARY KEY (id)
@@ -97,4 +97,15 @@ CREATE TABLE events (
   PRIMARY KEY (id),
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
   FOREIGN KEY (calendar_id) REFERENCES google_calendar(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE nudges (
+  id int(11) NOT NULL AUTO_INCREMENT,
+  sender_id int(11) DEFAULT NULL,
+  receiver_id int(11) DEFAULT NULL,
+  messages varchar(50) DEFAULT NULL,
+  created_at datetime DEFAULT NULL,
+  updated_at datetime DEFAULT NULL,
+  PRIMARY KEY (id),
+  FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
