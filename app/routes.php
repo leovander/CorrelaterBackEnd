@@ -48,6 +48,9 @@ Route::get('google/pullEvents/{id}', 'GoogleController@pullEvents');
 Route::get('google/pullEvents', 'GoogleController@pullEvents');
 Route::get('google/refreshToken/{id}', 'GoogleController@refreshToken');
 
+//CONTACTS
+Route::get('google/getContacts', 'GoogleController@getContacts');
+
 Route::resource('user', 'UserController');
 Route::resource('event', 'GoogleEventController');
 Route::resource('google_calendar', 'GoogleCalendarController');

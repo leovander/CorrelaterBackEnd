@@ -408,8 +408,8 @@ class UserController extends \BaseController {
 	{
 		$mood = $_POST['mood'];
 		
-		if(strlen($mood) >= 100)
-			$mood = substr($mood, 0, 100);
+		if(strlen($mood) >= 50)
+			$mood = substr($mood, 0, 50);
 		
 		if(Auth::check())
 		{
