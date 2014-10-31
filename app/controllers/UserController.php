@@ -355,11 +355,8 @@ class UserController extends \BaseController {
 
         }
 
-
-
 //		header('Content-type: application/json');
 		return json_encode($response);
-
 	}
 	
 	public function getFriendsNow()
@@ -545,6 +542,27 @@ class UserController extends \BaseController {
         }
 
         return $response;
+    }
+
+    public function setTimeAvailability () {
+        $date = $_POST['date'];
+        $startTime = $_POST['start_time'];
+        $endTime = $_POST['end_time'];
+        $status = $_POST['status'];
+        if (Auth::check()) {
+            $availability = new Availability();
+            $availability->date = $date;
+            $availability->start_time = $startTime;
+            $availability->end_time = $endTime;
+            $availability->statu = $status;
+            $availability->save();
+            $response['message'] = "Availability Time Set";
+        } else {
+            $response['message'] = "Not Logged In";
+        }
+
+        header('Content-type: application/json');
+        return json_encode($response);
     }
 	
 	//TODO

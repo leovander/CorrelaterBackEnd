@@ -109,3 +109,14 @@ CREATE TABLE nudges (
   PRIMARY KEY (id),
   FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE availabilities (
+  id int(11) NOT NULL AUTO_INCREMENT,
+  user_id int(11) DEFAULT NULL,
+  start_time time DEFAULT NULL,
+  end_time time DEFAULT NULL,
+  date date DEFAULT NULL,
+  status int(11) DEFAULT NULL,
+  PRIMARY KEY (id),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
