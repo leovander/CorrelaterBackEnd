@@ -289,7 +289,7 @@ class UserController extends \BaseController {
 
             $friendsOne = DB::table('users')
                             ->join('friends', 'users.id', '=', 'friends.friend_id')
-                            ->select('users.id', 'users.first_name', 'users.last_name', 'users.mood', 'friends.favorite')
+                            ->select('user  s.id', 'users.first_name', 'users.last_name', 'users.mood', 'friends.favorite')
                             ->orderBy('friends.favorite', 'desc')
                             ->orderBy('users.first_name', 'asc')
                             ->where('friends.user_id', '=', Auth::user()->id)
@@ -358,6 +358,114 @@ class UserController extends \BaseController {
 //		header('Content-type: application/json');
 		return json_encode($response);
 	}
+
+    public function getAvailableV2()
+    {
+        if (Auth::check()) {
+            $today = date("Y-m-d");
+            $now = date("H:i:s");
+            //$friendsOneAvailableId = array();
+            $friendsOneAvailable = array();
+            $allAvailFriends = array();
+
+            //2-free, 1-schedule, 1-busy(invisible)
+            $friendsTwo = DB::table('users')
+                ->join('friends', 'users.id', '=', 'friends.friend_id')
+                ->select('users.id', 'users.first_name', 'users.last_name', 'users.mood', 'friends.favorite')
+                ->orderBy('friends.favorite', 'desc')
+                ->orderBy('users.first_name', 'asc')
+                ->where('friends.user_id', '=', Auth::user()->id)
+                ->where('friends.friend_status','=',1)
+                ->where('users.status', '=', 2)
+                ->get();
+
+            $friendsOne = DB::table('users')
+                ->join('friends', 'users.id', '=', 'friends.friend_id')
+                ->select('user  s.id', 'users.first_name', 'users.last_name', 'users.mood', 'friends.favorite')
+                ->orderBy('friends.favorite', 'desc')
+                ->orderBy('users.first_name', 'asc')
+                ->where('friends.user_id', '=', Auth::user()->id)
+                ->where('friends.friend_status','=',1)
+                ->where('users.status', '=', 1)
+                ->get();
+
+            $friendsFreeNow = DB::table('users')
+                ->join('friends', 'users.id', '=', 'friends.friend_id')
+                ->join('availabilities', 'friends.friend_id', '=', 'availabilities.user_id')
+                ->select('users.id', 'users.first_name', 'users.last_name', 'users.mood', 'friends.favorite')
+                ->orderBy('friends.favorite', 'desc')
+                ->orderBy('users.first_name', 'asc')
+                ->where('availabilities.status', '=', 2)
+                ->where('availabilities.start_time', '<=', $now)
+                ->where('availabilities.end_time', '>=', $now)
+                ->where('friends.user_id', '=', Auth::user()->id)
+                ->where('friends.friend_status','=',1)
+                ->where('users.status', '=', 1)
+                ->get();
+
+            if(!empty($fiendsOne)) {
+                $friendsOneId = array();
+                foreach ($friendsOne as $friend) {
+                    array_push($friendsOneId, $friend->id);
+                }
+
+                //find the busy friends among the friend with schedule
+                $busyFriends = DB::table('events')
+                    ->select('events.id', 'events.user_id')
+                    ->whereIn('events.user_id', $friendsOneId)
+                    ->where('events.start_date', '=', $today)
+                    ->where('events.start_time', '<', $now)
+                    ->where('events.end_time', '>', $now)
+                    ->get();
+
+                $busyFriendsId = array();
+                foreach ($busyFriends as $people) {
+                    array_push($busyFriendsId, $people->user_id);
+                }
+
+                //if busyFriend is empty, then friendOneAvailable = friendOne
+                $friendsOneAvailableId = array_diff($friendsOneId, $busyFriendsId);
+
+                if (!empty($friendsOneAvailableId)) {
+                    //find only the available friends (schedule) based on the friendsOneAvailableId
+                    $friendsOneAvailable = DB::table('users')
+                        ->join('friends', 'users.id', '=', 'friends.friend_id')
+                        ->select('users.id', 'users.first_name', 'users.last_name', 'users.mood', 'friends.favorite')
+                        ->orderBy('friends.favorite', 'desc')
+                        ->orderBy('users.first_name', 'asc')
+                        ->whereIn('users.id', $friendsOneAvailableId)
+                        ->where('friends.user_id', '=', Auth::user()->id)
+                        ->where('friends.friend_status','=',1)
+                        ->where('users.status', '=', 1)
+                        ->get();
+                }
+            }
+
+            if(!empty($friendsTwo)) {
+                $allAvailableFriends = array_merge($friendsTwo);
+                if(!empty($friendsOneAvailable)) {
+                    $allAvailableFriends = array_merge($allAvailableFriends, $friendsOneAvailable);
+                    if(!empty($friendsFreeNow)) {
+                        $allAvailableFriends = array_merge($allAvailableFriends, $friendsFreeNow);
+                    }
+                }
+            }
+
+            if (!empty($allAvailableFriends)) {
+                $response['message'] = 'Success';
+                $response['count'] = count($allAvailableFriends);
+                $response['friends'] = $allAvailableFriends;
+            } else {
+                $response['message'] = 'Fail';
+                $response['count'] = 0;
+                $response['friends'] = "";
+            }
+
+        }
+
+//		header('Content-type: application/json');
+        return json_encode($response);
+    }
 	
 	public function getFriendsNow()
 	{
@@ -544,19 +652,34 @@ class UserController extends \BaseController {
         return $response;
     }
 
+    /* //TODO: 
+     * 1. Delete all entries from database first
+     * 2. Check for date and time format
+     */
     public function setTimeAvailability () {
         $date = $_POST['date'];
         $startTime = $_POST['start_time'];
         $endTime = $_POST['end_time'];
         $status = $_POST['status'];
+        $now = date("H:i:s");
         if (Auth::check()) {
-            $availability = new Availability();
-            $availability->date = $date;
-            $availability->start_time = $startTime;
-            $availability->end_time = $endTime;
-            $availability->statu = $status;
-            $availability->save();
-            $response['message'] = "Availability Time Set";
+            $oldAvailability = DB::table('availabilities')
+                ->where('user_id', '=', Auth::user()->id)
+                ->take(1)
+                ->get();
+            if(!empty($oldAvailability)) {
+                if ($oldAvailability->end_time < $now){
+                    $oldAvailability->delete();
+                }
+            } else {
+                $availability = new Availability();
+                $availability->date = $date;
+                $availability->start_time = $startTime;
+                $availability->end_time = $endTime;
+                $availability->statu = $status;
+                $availability->save();
+                $response['message'] = "Availability Time Set";
+            }
         } else {
             $response['message'] = "Not Logged In";
         }
