@@ -20,6 +20,7 @@ Route::post('facebook/create', 'FacebookController@create');
 Route::get('user/getMyInfo', 'UserController@getMyInfo');
 Route::get('user/setAvailability/{status}', 'UserController@setAvailability');
 Route::post('user/setMood', 'UserController@setMood');
+Route::post('user/setTimeAvailability', 'UserController@setTimeAvailability');
 
 //FRIEND
 Route::post('user/checkUserExists','UserController@checkUserExists');

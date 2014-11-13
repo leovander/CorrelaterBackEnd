@@ -276,7 +276,7 @@ class UserController extends \BaseController {
 	public function getAvailable()
 	{
         if (Auth::check()) {
-            //2-free, 1-schedule, 1-busy(invisible)
+            //2-free, 1-schedule, 0-busy(invisible)
             $friendsTwo = DB::table('users')
                             ->join('friends', 'users.id', '=', 'friends.friend_id')
                             ->select('users.id', 'users.first_name', 'users.last_name', 'users.mood', 'friends.favorite')
@@ -368,7 +368,7 @@ class UserController extends \BaseController {
             $friendsOneAvailable = array();
             $allAvailFriends = array();
 
-            //2-free, 1-schedule, 1-busy(invisible)
+            //2-free, 1-schedule, 0-busy(invisible)
             $friendsTwo = DB::table('users')
                 ->join('friends', 'users.id', '=', 'friends.friend_id')
                 ->select('users.id', 'users.first_name', 'users.last_name', 'users.mood', 'friends.favorite')
@@ -652,34 +652,38 @@ class UserController extends \BaseController {
         return $response;
     }
 
-    /* //TODO: 
-     * 1. Delete all entries from database first
-     * 2. Check for date and time format
-     */
     public function setTimeAvailability () {
-        $date = $_POST['date'];
-        $startTime = $_POST['start_time'];
-        $endTime = $_POST['end_time'];
+        $minutes = $_POST['time'];
         $status = $_POST['status'];
-        $now = date("H:i:s");
+
         if (Auth::check()) {
-            $oldAvailability = DB::table('availabilities')
+            DB::table('availabilities')
                 ->where('user_id', '=', Auth::user()->id)
-                ->take(1)
-                ->get();
-            if(!empty($oldAvailability)) {
-                if ($oldAvailability->end_time < $now){
-                    $oldAvailability->delete();
-                }
-            } else {
-                $availability = new Availability();
-                $availability->date = $date;
-                $availability->start_time = $startTime;
-                $availability->end_time = $endTime;
-                $availability->statu = $status;
-                $availability->save();
-                $response['message'] = "Availability Time Set";
+                ->delete();
+
+            if ($minutes == 0) { //forever mode
+                $startDate = date("0000-00-00");
+                $startTime = date("00:00:00");
+                $endDate = date("0000-00-00");
+                $endTime = date("00:00:00");
+            } else { //given minutes more than 0
+                $startDate = date("Y-m-d");
+                $startTime = date("H:i:s"); //now
+                $temp = date("Y-m-d H:i:s", strtotime("+" . $minutes . " minutes"));
+                $temp = explode(' ', $temp);
+                $endDate = $temp[0];
+                $endTime = $temp[1];
             }
+            $availability = new Availability();
+            $availability->user_id = Auth::user()->id;
+            $availability->start_date = $startDate;
+            $availability->end_date = $endDate;
+            $availability->start_time = $startTime;
+            $availability->end_time = $endTime;
+            $availability->status = $status;
+            $availability->save();
+            $response['message'] = "Availability Time Set";
+
         } else {
             $response['message'] = "Not Logged In";
         }
@@ -688,7 +692,7 @@ class UserController extends \BaseController {
         return json_encode($response);
     }
 	
-	//TODO
+	//TODO: to remove, this is for the http://e-wit.co.uk/correlate/submit.html page
 	public function googleLogin(){
 		if(Auth::attempt(array('email' => $_POST['email'], 'password' => $_POST['email']), true))
 		{

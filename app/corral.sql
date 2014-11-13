@@ -115,8 +115,11 @@ CREATE TABLE availabilities (
   user_id int(11) DEFAULT NULL,
   start_time time DEFAULT NULL,
   end_time time DEFAULT NULL,
-  date date DEFAULT NULL,
+  start_date date DEFAULT NULL,
+  end_date date DEFAULT NULL,
   status int(11) DEFAULT NULL,
+  created_at datetime DEFAULT NULL,
+  updated_at datetime DEFAULT NULL,
   PRIMARY KEY (id),
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
