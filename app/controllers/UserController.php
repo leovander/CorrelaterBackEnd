@@ -221,9 +221,14 @@ class UserController extends \BaseController {
 
 	public function logout()
 	{
-		Auth::logout();
+		if(Auth::check()) {
+			Auth::logout();
+			$response['message'] = 'Logged Out';
+		} else {
+			$response['message'] = 'Not Logged In';
+		}
+		
 		header('Content-type: application/json');
-		$response['message'] = 'Logged Out';
 		return json_encode($response);
 	}
 
@@ -371,6 +376,8 @@ class UserController extends \BaseController {
                 $response['friends'] = "";
             }
 
+        } else {
+	        $response['message'] = 'Not Logged In'; 
         }
 
 //		header('Content-type: application/json');
