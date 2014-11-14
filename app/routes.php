@@ -45,6 +45,10 @@ Route::get('user/getFriendsCount', 'UserController@getFriendsCount');
 Route::get('user/getNudges', 'UserController@getNudges');
 Route::post('user/setNudges', 'UserController@setNudges');
 
+//TODO: TEMP
+Route::get('user/getAvailableV2', 'UserController@getAvailableV2');
+
+
 //SCHEDULE
 Route::get('google/getCalendars', 'GoogleController@getCalendars');
 Route::post('google/confirmCalendars', 'GoogleController@confirmCalendars');
