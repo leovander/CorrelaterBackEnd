@@ -103,9 +103,23 @@ CREATE TABLE nudges (
   id int(11) NOT NULL AUTO_INCREMENT,
   sender_id int(11) DEFAULT NULL,
   receiver_id int(11) DEFAULT NULL,
-  messages varchar(50) DEFAULT NULL,
+  message varchar(50) DEFAULT NULL,
   created_at datetime DEFAULT NULL,
   updated_at datetime DEFAULT NULL,
   PRIMARY KEY (id),
   FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE availabilities (
+  id int(11) NOT NULL AUTO_INCREMENT,
+  user_id int(11) DEFAULT NULL,
+  start_time time DEFAULT NULL,
+  end_time time DEFAULT NULL,
+  start_date date DEFAULT NULL,
+  end_date date DEFAULT NULL,
+  status int(11) DEFAULT NULL,
+  created_at datetime DEFAULT NULL,
+  updated_at datetime DEFAULT NULL,
+  PRIMARY KEY (id),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
