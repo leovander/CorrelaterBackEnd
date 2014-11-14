@@ -469,13 +469,14 @@ class UserController extends \BaseController {
                     //find only the available friends (schedule) based on the friendsOneAvailableId
                     $friendsOneAvailable = DB::table('users')
                         ->join('friends', 'users.id', '=', 'friends.friend_id')
+                        ->join('availabilities', 'users.id', '=', 'availabilities.user_id')
                         ->select('users.id', 'users.first_name', 'users.last_name', 'users.mood', 'friends.favorite')
                         ->orderBy('friends.favorite', 'desc')
                         ->orderBy('users.first_name', 'asc')
                         ->whereIn('users.id', $friendsOneAvailableId)
                         ->where('friends.user_id', '=', Auth::user()->id)
                         ->where('friends.friend_status','=',1)
-                        ->where('users.status', '=', 1)
+                        ->where('availabilities.status', '=', 1)
                         ->get();
                 }
             }
@@ -491,6 +492,12 @@ class UserController extends \BaseController {
             }
 
 
+            function cmp($a, $b)
+            {
+                return strcmp($b->favorite, $a->favorite);
+            }
+            usort($allAvailableFriends, "cmp");
+
             if (!empty($allAvailableFriends)) {
                 $response['message'] = 'Success';
                 $response['count'] = count($allAvailableFriends);
@@ -504,6 +511,8 @@ class UserController extends \BaseController {
 		header('Content-type: application/json');
         return json_encode($response);
     }
+
+
 	
 	public function getFriendsNow()
 	{
