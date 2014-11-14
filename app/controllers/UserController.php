@@ -88,6 +88,12 @@ class UserController extends \BaseController {
 		if(Auth::check()) {
 			$response['message'] = 'Logged In';
 			$response['user'] = Auth::user();
+            $status = DB::table('users')
+                ->join('availabilities', 'users.id', '=', 'availabilities.user_id')
+                ->select('availabilities.status')
+                ->where('availabilities.user_id', '=', Auth::user()->id)
+                ->get();
+            $response['status'] = $status[0]->status;
 		} else {
 			$response['message'] = 'Not Logged In';
 		}
