@@ -591,7 +591,7 @@ class GoogleController extends \BaseController
                 array_push($eventsToStore, array(
                     'id' => $event->id,
                     'calendar_id' => $calendar->id,
-                    'user_id' => $user->id,
+                    'user_id' => $user->user_id,
                     'created' => $event->created,
                     'updated' => $event->updated,
                     'summary' => $event->summary,
