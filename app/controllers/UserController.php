@@ -511,59 +511,6 @@ class UserController extends \BaseController {
 		header('Content-type: application/json');
         return json_encode($response);
     }
-
-
-	
-	public function getFriendsNow()
-	{
-		if(Auth::check()) {
-			$friends = DB::table('users')
-        				->join('friends', 'users.id', '=', 'friends.user_id')
-	        			->select('users.id', 'users.first_name', 'users.last_name', 'users.mood')
-	        			->orderBy('users.first_name', 'asc')
-						->where('friends.friend_id', '=', Auth::user()->id)
-	        			->where('friends.friend_status','=',1)
-	        			->whereIn('users.status', array(1, 2))
-						->get();
-			$response['message'] = 'Success';
-			$response['count'] = count($friends);
-			$response['friends'] = $friends;
-		}
-		else {
-			$response['message'] = 'Not Logged In';
-		}
-		header('Content-type: application/json');
-		return json_encode($response);
-	}
-	
-	//2 makes the user available no matter what, 1 uses the times in schedule, and 0 doesn't show the current user at all
-	public function setAvailability($status)
-	{
-		if(Auth::check())
-		{
-			if($status == 1){ //based on schedule
-				DB::table('users')
-					->where('id', '=', Auth::user()->id)
-					->update(array('status' => 1));
-	        }
-			else if($status == 0) //invisible
-			{
-				DB::table('users')
-					->where('id', '=', Auth::user()->id)
-					->update(array('status' => 0));
-			}
-			else //completely free
-			{
-				DB::table('users')
-					->where('id', '=', Auth::user()->id)
-					->update(array('status' => 2));
-			}
-		}
-		
-		$response['message'] = "Availability Set";
-		header('Content-type: application/json');
-		return json_encode($response);
-	}
 	
 	public function setMood()
 	{
@@ -623,16 +570,16 @@ class UserController extends \BaseController {
 						->where('nudges.receiver_id', '=', Auth::user()->id)
 	        			->where('friends.friend_status','=',1)
 						->get();
-			$response['message'] = 'Success';
-			$response['count'] = count($nudges);
-			$response['friends'] = $nudges;
+            $response['message'] = 'Success';
+            $response['count'] = count($nudges);
+            $response['nudges'] = $nudges;
 		}
 		else {
 			$response['message'] = 'Not Logged In';
 		}
 
 		header('Content-type: application/json');
-		return json_encode($nudges);
+		return json_encode($response);
 	}
 
     public function setNudges() {
@@ -644,15 +591,14 @@ class UserController extends \BaseController {
 
         if(Auth::check()) {
             $check = $this->isNudgeSet($receiverId);
-
             //if nudge exist from the sender to the user, update the message
-            if($check["message"] === "Previously Set") {
+            if($check["message"] == "Previously Set") {
                 DB::table('nudges')
                     ->where('sender_id', '=', Auth::user()->id)
                     ->where('receiver_id', '=', $receiverId)
                     ->update(array('message' => $message));
                 $response['message'] = 'Update nudge';
-            //else save the nudge
+                //else save the nudge
             } else {
                 $new_nudge = new Nudge();
                 $new_nudge->sender_id = Auth::user()->id;
@@ -662,7 +608,6 @@ class UserController extends \BaseController {
                 $response['message'] = 'Set nudge';
             }
         }
-
         //header('Content-type: application/json');
         return json_encode($response);
     }

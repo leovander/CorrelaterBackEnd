@@ -29,7 +29,6 @@ CREATE TABLE users (
   google_refresh_token varchar(255) DEFAULT NULL,
   google_id_token varchar(255) DEFAULT NULL,
   google_code varchar(255) DEFAULT NULL,
-  status tinyint(1) DEFAULT '1',
   mood varchar(50) DEFAULT NULL,
   created_at datetime NOT NULL,
   updated_at datetime NOT NULL,
