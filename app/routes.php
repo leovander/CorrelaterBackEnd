@@ -29,7 +29,7 @@ Route::get('user/addFriend/{id}','UserController@addFriend');
 Route::get('user/acceptFriend/{id}','UserController@acceptFriend');
 Route::get('user/deleteFriend/{id}','UserController@deleteFriend');
 Route::get('user/setFavorite/{id}','UserController@setFavorite');
-Route::post('user/deleteNudge','UserController@deleteNudge');
+Route::get('user/deleteNudge/{id}','UserController@deleteNudge');
 
 //SESSION
 Route::post('user/login', 'UserController@login');

@@ -390,6 +390,51 @@ class UserController extends \BaseController {
 		return json_encode($response);
 	}
 
+    /**
+     * Find friends who are available in the next X days
+     * 1. Get all confirmed friends
+     * 2. Get busy friends based on the given date
+     * 3.
+     */
+    /*
+    public function getAvailableFuture()
+    {
+        $numDays = $_POST['num_days'];
+        $friendsId = $_POST['friends_ids']; //array of all friends that need to find for availability
+        $today = date("Y-m-d");
+        $offsetDays =
+        if (Auth::check())
+        {
+
+            $friendsOneAvailable = array();
+            $busyFriends = array();
+
+            $friendsOne = DB::table('users')
+                ->join('friends', 'users.id', '=', 'friends.frind_id')
+                ->select('users.id', 'users.first_name', 'users.last_name', 'users.mood', 'friends.favorite')
+                ->orderBy('friends.favorite', 'desc')
+                ->orderBy('users.first_name', 'desc')
+                ->whereIn('events.user_id', $friendsId)
+                ->where('friends.user_id', '=', Auth::user()->id)
+                ->where('friends.friend_status', '=', 1)
+                ->get();
+
+            if (!empty($friendsOne)) {
+                $friendsOneId = array();
+                foreach ($friendsOne as $friend) {
+                    array_push($friendsOneId, $friend->id);
+                }
+
+                //findi the busy friends among the friends with schedule
+                $busyFriends = DB::table('events')
+                    ->select('events.id', 'events.user_id')
+                    ->whereIn('events.user_id', $friendsOneId)
+                    ->where('events.start_date', '=')
+            }
+        }
+    }
+    */
+
     public function getAvailableV2()
     {
         if (Auth::check()) {
@@ -612,8 +657,7 @@ class UserController extends \BaseController {
         return json_encode($response);
     }
 
-    public function deleteNudge() {
-        $senderId = $_POST['sender_id'];
+    public function deleteNudge($senderId) {
         if(Auth::check()) {
             DB::table('nudges')
                 ->where('sender_id', '=', $senderId)
