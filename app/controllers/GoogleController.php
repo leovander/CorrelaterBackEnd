@@ -28,6 +28,16 @@ class GoogleController extends \BaseController
                     $new_user->valid = 1;
                     $new_user->save();
 
+                    //TODO: changed here (1)
+                    $google_user = new GoogleUsers();
+                    $google_user->user_id = Auth::user()->id;
+                    $google_user->google_id = $profile->id;
+                    $google_user->google_access_token = $_POST['google_access_token'];
+                    $google_user->google_refresh_token = $_POST['google_refresh_token'];
+                    $google_user->google_id_token = $_POST['google_id_token'];
+                    $google_user->google_code = $_POST['google_code'];
+                    $google_user->save();
+
 	                $credentials = array(
 					  'email' => $profile->email,
 					  'password' => $profile->email
@@ -51,8 +61,18 @@ class GoogleController extends \BaseController
 	                    $new_user->google_id = $profile->id;
 	                    $new_user->valid = 1;
 	                    $new_user->save();
-	
-		                $credentials = array(
+
+                        //TODO: changed here (2)
+                        $google_user = new GoogleUsers();
+                        $google_user->user_id = Auth::user()->id;
+                        $google_user->google_id = $profile->id;
+                        $google_user->google_access_token = $_POST['google_access_token'];
+                        $google_user->google_refresh_token = $_POST['google_refresh_token'];
+                        $google_user->google_id_token = $_POST['google_id_token'];
+                        $google_user->google_code = $_POST['google_code'];
+                        $google_user->save();
+
+                        $credentials = array(
 						  'email' => $new_user->email,
 						  'password' => $new_user->email
 						);
@@ -83,8 +103,10 @@ class GoogleController extends \BaseController
 				if(Auth::attempt(array('email' => $profile->email, 'password' => $profile->email), true))
 				{
 		            $id = Auth::user()->id;
-		            $user = User::find($id);
-					
+                    //TODO: changed here (3)
+//		            $user = User::find($id);
+                    $user = GoogleUsers::find($id);
+
 					$user->google_access_token = $_POST['google_access_token'];
 		            $user->google_refresh_token = $_POST['google_refresh_token'];
 		            $user->google_id_token = $_POST['google_id_token'];
@@ -119,7 +141,9 @@ class GoogleController extends \BaseController
     //Helper function: Get Google Token Info for expiration time
     public function isValidToken($id)
     {
-        $user = User::find($id);
+        //TODO: changed here (4)
+//        $user = User::find($id);
+        $user = GoogleUsers::find($id);
 
         $request_url = 'https://www.googleapis.com/oauth2/v1/tokeninfo';
         $profile = json_decode(file_get_contents($request_url . '?access_token=' . $user->google_access_token));
@@ -143,7 +167,9 @@ class GoogleController extends \BaseController
     //Helper function: Refresh Google Access Token when the old Access Token expired
     public function refreshToken($id)
     {
-        $user = User::find($id);
+        //TODO: changed here (5)
+//        $user = User::find($id);
+        $user = GoogleUsers::find($id);
         $settings = Setting::where('source', '=', 'google')->get();
 
         $data = array('client_id' => $settings[0]->client_id,
@@ -183,18 +209,13 @@ class GoogleController extends \BaseController
         return $ret;
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int $id
-     * @return Response
-     */
-
     public function getCalendars()
     {
         if(Auth::check()) {
             $id = Auth::user()->id;
-            $user = User::find($id);
+            //TODO: changed here (6)
+//            $user = User::find($id);
+            $user = GoogleUsers::find($id);
 
             //check to make sure the user access token is still valid
             $ch = curl_init('https://www.googleapis.com/calendar/v3/users/me/calendarList?access_token=' . $user->google_access_token);
@@ -270,7 +291,9 @@ class GoogleController extends \BaseController
     {
         if(Auth::check()) {
             $id = Auth::user()->id;
-            $user = User::find($id);
+            //TODO: changed here (6)
+//            $user = User::find($id);
+            $user = GoogleUsers::find($id);
 
             $eventIdInDb = array();
             $calIdInDb = array();
@@ -472,7 +495,9 @@ class GoogleController extends \BaseController
     }
 
     public function pullAllEvents ($id) {
-        $user = User::find($id);
+        //TODO: changed here (7)
+//            $user = User::find($id);
+        $user = GoogleUsers::find($id);
         $calendarArray = array();
         $eventsToStore = array();
         $calendarCurrents = DB::table('google_calendar')
@@ -599,8 +624,9 @@ class GoogleController extends \BaseController
         if(Auth::check()) {
             $id = Auth::user()->id;
             $user = User::find($id);
+            $google_user = GoogleUsers::find($id);
 
-            $ch = curl_init('https://www.google.com/m8/feeds/contacts/'.$user->email.'/full?v=3.0&alt=json&max-results=5000&access_token=' . $user->google_access_token);
+            $ch = curl_init('https://www.google.com/m8/feeds/contacts/'.$user->email.'/full?v=3.0&alt=json&max-results=5000&access_token=' . $google_user->google_access_token);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             $contacts = curl_exec($ch);
             $contacts = json_decode($contacts);

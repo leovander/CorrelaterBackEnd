@@ -612,12 +612,13 @@ class UserController extends \BaseController {
         return json_encode($response);
     }
 
-    public function deleteNudge($senderId) {
+    public function deleteNudge() {
+        $senderId = $_POST['sender_id'];
         if(Auth::check()) {
             DB::table('nudges')
                 ->where('sender_id', '=', $senderId)
                 ->where('receiver_id', '=', Auth::user()->id)
-                ->delete() ;
+                ->delete();
             $response['message'] = 'Nudge Deleted';
         }
         header('Content-type: application/json');

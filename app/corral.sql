@@ -1,9 +1,10 @@
 DROP TABLE settings;
-DROP TABLE group_members;
-DROP TABLE groups;
 DROP TABLE friends;
+DROP TABLE availabilities;
+DROP TABLE nudges;
 DROP TABLE events;
 DROP TABLE google_calendar;
+DROP TABLE google_users;
 DROP TABLE users;
 
 CREATE TABLE settings (
@@ -35,10 +36,14 @@ CREATE TABLE users (
   PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-CREATE TABLE groups (
-  id int(11) NOT NULL AUTO_INCREMENT,
+CREATE TABLE google_users (
+  id int(11) unsigned NOT NULL AUTO_INCREMENT,
   user_id int(11) NOT NULL,
-  name varchar(100) NOT NULL,
+  google_id varchar(255) DEFAULT NULL,
+  google_access_token varchar(255) DEFAULT NULL,
+  google_refresh_token varchar(255) DEFAULT NULL,
+  google_id_token varchar(255) DEFAULT NULL,
+  google_code varchar(255) DEFAULT NULL,
   created_at datetime NOT NULL,
   updated_at datetime NOT NULL,
   PRIMARY KEY (id),
@@ -57,17 +62,6 @@ CREATE TABLE friends (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
   FOREIGN KEY (friend_id) REFERENCES users(id) ON DELETE CASCADE,
   UNIQUE (user_id, friend_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
-CREATE TABLE group_members (
-  id int(11) NOT NULL AUTO_INCREMENT,
-  group_id int(11) NOT NULL,
-  user_id int(11) NOT NULL,
-  created_at datetime NOT NULL,
-  updated_at datetime NOT NULL,
-  PRIMARY KEY (id),
-  FOREIGN KEY (group_id) REFERENCES groups(id) ON DELETE CASCADE,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE google_calendar (
