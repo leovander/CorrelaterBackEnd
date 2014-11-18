@@ -610,7 +610,7 @@ class UserController extends \BaseController {
 			$nudges = DB::table('users')
         				->join('nudges', 'users.id', '=', 'nudges.sender_id')
 						->join('friends', 'friends.user_id', '=', 'users.id')
-	        			->select('nudges.message', 'users.first_name', 'users.last_name')
+	        			->select('nudges.message', 'users.id','users.first_name', 'users.last_name')
 						->where('friends.friend_id', '=', Auth::user()->id)
 						->where('nudges.receiver_id', '=', Auth::user()->id)
 	        			->where('friends.friend_status','=',1)
