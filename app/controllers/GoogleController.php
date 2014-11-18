@@ -16,19 +16,13 @@ class GoogleController extends \BaseController
                 $user = User::where('email', '=', $profile->email)->take(1)->get();
                 if ($user->isEmpty()) {
                     $new_user = new User;
-                    $new_user->google_access_token = $_POST['google_access_token'];
-                    $new_user->google_refresh_token = $_POST['google_refresh_token'];
-                    $new_user->google_id_token = $_POST['google_id_token'];
-                    $new_user->google_code = $_POST['google_code'];
                     $new_user->email = $profile->email;
                     $new_user->password = Hash::make($profile->email);
                     $new_user->first_name = $profile->given_name;
                     $new_user->last_name = $profile->family_name;
-                    $new_user->google_id = $profile->id;
                     $new_user->valid = 1;
                     $new_user->save();
 
-                    //TODO: changed here (1)
                     $google_user = new GoogleUsers();
                     $google_user->user_id = $new_user->id;
                     $google_user->google_id = $profile->id;
@@ -51,18 +45,12 @@ class GoogleController extends \BaseController
                 } else {
 	                if($user[0]->valid == 0) {
 		            	$new_user = User::find($user[0]->id);
-		            	$new_user->google_access_token = $_POST['google_access_token'];
-	                    $new_user->google_refresh_token = $_POST['google_refresh_token'];
-	                    $new_user->google_id_token = $_POST['google_id_token'];
-	                    $new_user->google_code = $_POST['google_code'];
 	                    $new_user->password = Hash::make($profile->email);
 	                    $new_user->first_name = $profile->given_name;
 	                    $new_user->last_name = $profile->family_name;
-	                    $new_user->google_id = $profile->id;
 	                    $new_user->valid = 1;
 	                    $new_user->save();
 
-                        //TODO: changed here (2)
                         $google_user = new GoogleUsers();
                         $google_user->user_id = $new_user->id;
                         $google_user->google_id = $profile->id;
@@ -103,8 +91,6 @@ class GoogleController extends \BaseController
 				if(Auth::attempt(array('email' => $profile->email, 'password' => $profile->email), true))
 				{
 		            $id = Auth::user()->id;
-                    //TODO: changed here (3)
-//		            $user = User::find($id);
                     $user = GoogleUsers::find($id);
 
 					$user->google_access_token = $_POST['google_access_token'];
@@ -141,8 +127,6 @@ class GoogleController extends \BaseController
     //Helper function: Get Google Token Info for expiration time
     public function isValidToken($id)
     {
-        //TODO: changed here (4)
-//        $user = User::find($id);
         $user = GoogleUsers::find($id);
 
         $request_url = 'https://www.googleapis.com/oauth2/v1/tokeninfo';
@@ -167,8 +151,6 @@ class GoogleController extends \BaseController
     //Helper function: Refresh Google Access Token when the old Access Token expired
     public function refreshToken($id)
     {
-        //TODO: changed here (5)
-//        $user = User::find($id);
         $user = GoogleUsers::find($id);
         $settings = Setting::where('source', '=', 'google')->get();
 
@@ -213,8 +195,6 @@ class GoogleController extends \BaseController
     {
         if(Auth::check()) {
             $id = Auth::user()->id;
-            //TODO: changed here (6)
-//            $user = User::find($id);
             $user = GoogleUsers::find($id);
 
             //check to make sure the user access token is still valid
@@ -291,8 +271,6 @@ class GoogleController extends \BaseController
     {
         if(Auth::check()) {
             $id = Auth::user()->id;
-            //TODO: changed here (6)
-//            $user = User::find($id);
             $user = GoogleUsers::find($id);
 
             $eventIdInDb = array();
@@ -495,8 +473,6 @@ class GoogleController extends \BaseController
     }
 
     public function pullAllEvents ($id) {
-        //TODO: changed here (7)
-//            $user = User::find($id);
         $user = GoogleUsers::find($id);
         $calendarArray = array();
         $eventsToStore = array();
