@@ -30,7 +30,7 @@ class GoogleController extends \BaseController
 
                     //TODO: changed here (1)
                     $google_user = new GoogleUsers();
-                    $google_user->user_id = Auth::user()->id;
+                    $google_user->user_id = $new_user->id;
                     $google_user->google_id = $profile->id;
                     $google_user->google_access_token = $_POST['google_access_token'];
                     $google_user->google_refresh_token = $_POST['google_refresh_token'];
@@ -64,7 +64,7 @@ class GoogleController extends \BaseController
 
                         //TODO: changed here (2)
                         $google_user = new GoogleUsers();
-                        $google_user->user_id = Auth::user()->id;
+                        $google_user->user_id = $new_user->id;
                         $google_user->google_id = $profile->id;
                         $google_user->google_access_token = $_POST['google_access_token'];
                         $google_user->google_refresh_token = $_POST['google_refresh_token'];
