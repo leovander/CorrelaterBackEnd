@@ -40,6 +40,7 @@ Route::get('user/logout', 'UserController@logout');
 //LIST
 Route::get('user/getFriends', 'UserController@getFriends');
 Route::get('user/getAvailableV2', 'UserController@getAvailableV2');
+Route::get('user/getAvailableFuture', 'UserController@getAvailableFuture');
 Route::get('user/getRequests', 'UserController@getRequests');
 Route::get('user/getFriendsCount', 'UserController@getFriendsCount');
 Route::get('user/getNudges', 'UserController@getNudges');

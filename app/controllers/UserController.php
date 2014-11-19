@@ -392,29 +392,26 @@ class UserController extends \BaseController {
 
     /**
      * Find friends who are available in the next X days
-     * 1. Get all confirmed friends
-     * 2. Get busy friends based on the given date
-     * 3.
+     * 1. Get all confirmed friends based on schedule only, on the given date and time
+     * 2. Remove the busy from the schedule friends
+     * 3. Resulting in availableFriends 
      */
-    /*
     public function getAvailableFuture()
     {
-        $numDays = $_POST['num_days'];
-        $friendsId = $_POST['friends_ids']; //array of all friends that need to find for availability
-        $today = date("Y-m-d");
-        $offsetDays =
+        $date = $_POST['date'];
+        $time = $_POST['time'];
+
         if (Auth::check())
         {
-
             $friendsOneAvailable = array();
             $busyFriends = array();
 
+            //disregard availabilities table
             $friendsOne = DB::table('users')
                 ->join('friends', 'users.id', '=', 'friends.frind_id')
                 ->select('users.id', 'users.first_name', 'users.last_name', 'users.mood', 'friends.favorite')
                 ->orderBy('friends.favorite', 'desc')
-                ->orderBy('users.first_name', 'desc')
-                ->whereIn('events.user_id', $friendsId)
+                ->orderBy('users.first_name', 'asc')
                 ->where('friends.user_id', '=', Auth::user()->id)
                 ->where('friends.friend_status', '=', 1)
                 ->get();
@@ -429,11 +426,47 @@ class UserController extends \BaseController {
                 $busyFriends = DB::table('events')
                     ->select('events.id', 'events.user_id')
                     ->whereIn('events.user_id', $friendsOneId)
-                    ->where('events.start_date', '=')
+                    ->where('events.start_date', '=', $date)
+                    ->where('events.start_time', '<', $time)
+                    ->where('events.end_time', '>', $time)
+                    ->get();
+
+                $busyFriendsId = array();
+                foreach ($busyFriends as $friend) {
+                    array_push($busyFriendsId, $friend->user_id);
+                }
+
+                //if busyFriend is empty, then friendOneAvailable = friendOne
+                $friendsOneAvailableId = array_diff($friendsOneId, $busyFriendsId);
+
+                if (!empty($friendsOneAvailableId)) {
+                    //find only the available friends (schedule) based on the friendsOneAvailableId
+                    $friendsOneAvailable = DB::table('users')
+                        ->join('friends', 'users.id', '=', 'friends.friend_id')
+                        ->join('availabilities', 'users.id', '=', 'availabilities.user_id')
+                        ->select('users.id', 'users.first_name', 'users.last_name', 'users.mood', 'friends.favorite')
+                        ->orderBy('friends.favorite', 'desc')
+                        ->orderBy('users.first_name', 'asc')
+                        ->whereIn('users.id', $friendsOneAvailableId)
+                        ->where('friends.user_id', '=', Auth::user()->id)
+                        ->where('friends.friend_status','=',1)
+                        ->where('availabilities.status', '=', 1)
+                        ->get();
+                }
+            }
+            if (!empty($friendsOneAvailable)) {
+                $response['message'] = 'Success';
+                $response['count'] = count($friendsOneAvailable);
+                $response['friends'] = $friendsOneAvailable;
+            } else {
+                $response['message'] = 'Fail';
+                $response['count'] = 0;
+                $response['friends'] = "";
             }
         }
+        header('Content-type: application/json');
+        return json_encode($response);
     }
-    */
 
     public function getAvailableV2()
     {
