@@ -649,6 +649,13 @@ class GoogleController extends \BaseController
                     }
                 }
             }
+
+            foreach($emailAddresses as $subKey => $subArray){
+                if($subArray['email'] == $user->email){
+                    unset($emailAddresses[$subKey]);
+                }
+            }
+
             $response['message'] = 'Success';
             $response['emails'] = $emailAddresses;
         }

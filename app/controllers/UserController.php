@@ -94,6 +94,13 @@ class UserController extends \BaseController {
                 ->where('availabilities.user_id', '=', Auth::user()->id)
                 ->get();
             $response['status'] = $status[0]->status;
+            $google = DB::table('google_users')
+                ->select('*')
+                ->where('user_id', '=', Auth::user()->id)
+                ->get();
+            if (!empty($google[0])) {
+                $response['google'] = 'Google User';
+            }
 		} else {
 			$response['message'] = 'Not Logged In';
 		}
@@ -394,7 +401,7 @@ class UserController extends \BaseController {
      * Find friends who are available in the next X days
      * 1. Get all confirmed friends based on schedule only, on the given date and time
      * 2. Remove the busy from the schedule friends
-     * 3. Resulting in availableFriends 
+     * 3. Resulting in availableFriends
      */
     public function getAvailableFuture()
     {
