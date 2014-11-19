@@ -630,29 +630,27 @@ class GoogleController extends \BaseController
                         }
                         foreach ($entry->{'gd$email'} as $email) {
                             if (isset($email->rel)) { //type of email
-                                if ($email->rel == 'http://schemas.google.com/g/2005#home') {
-                                    array_push($emailAddresses, array(
-                                        'firstName' => $firstName,
-                                        'lastInitial' => $lastInitial,
-                                        'email' => $email->address, 'type' => 'home'));
-                                    break;
-                                }
-                                if ($email->rel == 'http://schemas.google.com/g/2005#other') {
-                                    array_push($emailAddresses, array(
-                                        'firstName' => $firstName,
-                                        'lastInitial' => $lastInitial,
-                                        'email' => $email->address, 'type' => 'other'));
-                                    break;
+                                if ($email->address != $user->email) { //exclude user own email
+                                    if ($email->rel == 'http://schemas.google.com/g/2005#home') {
+                                        array_push($emailAddresses, array(
+                                            'firstName' => $firstName,
+                                            'lastInitial' => $lastInitial,
+                                            'email' => $email->address,
+                                            'type' => 'home'));
+                                        break;
+                                    }
+                                    if ($email->rel == 'http://schemas.google.com/g/2005#other') {
+                                        array_push($emailAddresses, array(
+                                            'firstName' => $firstName,
+                                            'lastInitial' => $lastInitial,
+                                            'email' => $email->address,
+                                            'type' => 'other'));
+                                        break;
+                                    }
                                 }
                             }
                         }
                     }
-                }
-            }
-
-            foreach($emailAddresses as $subKey => $subArray){
-                if($subArray['email'] == $user->email){
-                    unset($emailAddresses[$subKey]);
                 }
             }
 
