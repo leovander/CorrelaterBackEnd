@@ -594,13 +594,14 @@ class UserController extends \BaseController {
                 $allAvailableFriends = array_merge($allAvailableFriends, $friendsTwoForever);
             }
 
-            //hellper function to help sort the favorite friends to be in front of array
-            function cmp($a, $b)
-            {
-                return strcmp($b->favorite, $a->favorite);
+            // Obtain a list of columns
+            foreach ($allAvailableFriends as $key => $row) {
+                $favorite[$key]  = $row->favorite;
+                $firstName[$key] = strtolower($row->first_name); //case to lowercase for sorting
             }
-            usort($allAvailableFriends, "cmp");
-
+            //sort by favorite then first name
+            array_multisort($favorite, SORT_DESC, $firstName, SORT_ASC, $allAvailableFriends);
+            
             if (!empty($allAvailableFriends)) {
                 $response['message'] = 'Success';
                 $response['count'] = count($allAvailableFriends);
