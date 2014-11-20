@@ -41,7 +41,7 @@ Route::get('user/logout', 'UserController@logout');
 Route::get('user/getFriends', 'UserController@getFriends');
 Route::get('user/getAvailableV2', 'UserController@getAvailableV2');
 Route::get('user/getAvailableFuture', 'UserController@getAvailableFuture');
-Route::get('user/checkAvailability/{id}', 'UserController@checkAvailability');
+Route::get('user/checkAvailability', 'UserController@checkAvailability');
 Route::get('user/getRequests', 'UserController@getRequests');
 Route::get('user/getFriendsCount', 'UserController@getFriendsCount');
 Route::get('user/getNudges', 'UserController@getNudges');
