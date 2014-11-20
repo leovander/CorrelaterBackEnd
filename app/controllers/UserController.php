@@ -636,7 +636,7 @@ class UserController extends \BaseController {
                     'end_time' => "00:00:00",
                     'status' => 1));
             $remainingTime = 0;
-        } elseif ($availability[0]->end_date = $today) {
+        } elseif ($availability[0]->end_date == $today) {
             if ($availability[0]->end_time <= $now) {
                 DB::table('availabilities')
                     ->where('availabilities.user_id', '=', $id)
