@@ -88,12 +88,16 @@ class UserController extends \BaseController {
 		if(Auth::check()) {
 			$response['message'] = 'Logged In';
 			$response['user'] = Auth::user();
+            $temp = $this->checkAvailability(Auth::user()->id);
+            $temp = json_decode($temp);
             $status = DB::table('users')
                 ->join('availabilities', 'users.id', '=', 'availabilities.user_id')
                 ->select('availabilities.status')
                 ->where('availabilities.user_id', '=', Auth::user()->id)
                 ->get();
             $response['status'] = $status[0]->status;
+            $response['remaining_time'] = $temp->remaining_time;
+
             $google = DB::table('google_users')
                 ->select('*')
                 ->where('user_id', '=', Auth::user()->id)
@@ -483,6 +487,18 @@ class UserController extends \BaseController {
             $friendsOneAvailable = array();
             $allAvailableFriends = array();
 
+            $allConfirmedFriends = DB::table('users')
+                ->join('friends', 'users.id', '=', 'friends.friend_id')
+                ->join('availabilities', 'users.id', '=', 'availabilities.user_id')
+                ->select('users.id', 'users.first_name', 'users.last_name', 'users.mood', 'friends.favorite')
+                ->where('friends.user_id', '=', Auth::user()->id)
+                ->where('friends.friend_status','=',1)
+                ->get();
+
+            foreach ($allConfirmedFriends as $friend) {
+                $this->checkAvailability($friend->id);
+            }
+
             //Status Legend: 2-free, 1-schedule, 0-busy(invisible)
             //Status 2 with time limit
             $friendsTwo = DB::table('users')
@@ -576,7 +592,7 @@ class UserController extends \BaseController {
                 $allAvailableFriends = array_merge($allAvailableFriends, $friendsTwoForever);
             }
 
-
+            //hellper function to help sort the favorite friends to be in front of array
             function cmp($a, $b)
             {
                 return strcmp($b->favorite, $a->favorite);
@@ -594,6 +610,55 @@ class UserController extends \BaseController {
             }
         }
 		header('Content-type: application/json');
+        return json_encode($response);
+    }
+
+    /**
+     * Helper function to check availabilities status
+     *   If end_time > now, then leave as is
+     *   Otherwise, change the status back to 1 (schedule mode)
+     *   Return the Mode and the remaining minutes
+     */
+    public function checkAvailability ($id) {
+        $availability = DB::table('availabilities')
+            ->where('availabilities.user_id', '=', $id)
+            ->get();
+
+        $today = date("Y-m-d");
+        $now = date("H:i:s");
+        $remainingTime = 0;
+        if ($availability[0]->end_date < $today) {
+            DB::table('availabilities')
+                ->where('availabilities.user_id', '=', $id)
+                ->update(array('start_date' => "0000-00-00",
+                    'end_date' => "0000-000-00",
+                    'start_time' => "00:00:00",
+                    'end_time' => "00:00:00",
+                    'status' => 1));
+            $remainingTime = 0;
+        } elseif ($availability[0]->end_date = $today) {
+            if ($availability[0]->end_time <= $now) {
+                DB::table('availabilities')
+                    ->where('availabilities.user_id', '=', $id)
+                    ->update(array('start_date' => "0000-00-00",
+                                    'end_date' => "0000-000-00",
+                                    'start_time' => "00:00:00",
+                                    'end_time' => "00:00:00",
+                                    'status' => 1));
+                $remainingTime = 0;
+            } else {
+                $remainingTime = round((strtotime($availability[0]->end_date." ".$availability[0]->end_time)
+                                        - strtotime($today." ".$now)) / 60);
+            }
+        }
+        $availability = DB::table('availabilities')
+            ->where('availabilities.user_id', '=', $id)
+            ->get();
+
+        $response['status'] = $availability[0]->status;
+        $response['remaining_time'] = $remainingTime;
+
+        header('Content-type: application/json');
         return json_encode($response);
     }
 	
