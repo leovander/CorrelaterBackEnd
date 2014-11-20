@@ -498,7 +498,7 @@ class UserController extends \BaseController {
                 ->get();
 
             foreach ($allConfirmedFriends as $friend) {
-                $this->checkAvailability($friend->id);
+                $this->checkAvailabilityHelper($friend->id);
             }
 
             //Status Legend: 2-free, 1-schedule, 0-busy(invisible)
@@ -622,7 +622,17 @@ class UserController extends \BaseController {
      *   Otherwise, change the status back to 1 (schedule mode)
      *   Return the Mode and the remaining minutes
      */
-    public function checkAvailability ($id) {
+    public function checkAvailability () {
+        if(Auth::check()) {
+            $response = $this->checkAvailabilityHelper(Auth::user()->id);
+            $response = json_decode($response);
+        }
+
+        header('Content-type: application/json');
+        return json_encode($response);
+    }
+
+    public function checkAvailabilityHelper ($id) {
         $availability = DB::table('availabilities')
             ->where('availabilities.user_id', '=', $id)
             ->get();
