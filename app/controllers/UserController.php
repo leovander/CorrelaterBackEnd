@@ -421,7 +421,7 @@ class UserController extends \BaseController {
 
             //disregard availabilities table
             $friendsOne = DB::table('users')
-                ->join('friends', 'users.id', '=', 'friends.frind_id')
+                ->join('friends', 'users.id', '=', 'friends.friend_id')
                 ->select('users.id', 'users.first_name', 'users.last_name', 'users.mood', 'friends.favorite')
                 ->orderBy('friends.favorite', 'desc')
                 ->orderBy('users.first_name', 'asc')
