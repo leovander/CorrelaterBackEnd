@@ -23,14 +23,19 @@ class RoomController extends \BaseController
     public function getAvailabilities ($date, $time)
     {
         $now = date("H:i:s");
+
         //default to TODAY, if no argument given
-        if ($date == null || $date = "today") {
+        if ($date == "today") {
             $date = date("Y-m-d");
+        } else {
+            $date= date("Y-m-d", strtotime($date));
         }
 
         //default to NOW, if no argument given
-        if ($time == null || $time = "now") {
+        if ($time == "now") {
             $time = date("H:i:s");
+        } else {
+            $time = date("H:i:s", strtotime($time));
         }
 
         //find day of week based on date given
