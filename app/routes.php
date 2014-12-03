@@ -40,7 +40,7 @@ Route::get('user/logout', 'UserController@logout');
 //LIST
 Route::get('user/getFriends', 'UserController@getFriends');
 Route::get('user/getAvailableV2', 'UserController@getAvailableV2');
-Route::get('user/getAvailableFuture', 'UserController@getAvailableFuture');
+Route::post('user/getAvailableFuture', 'UserController@getAvailableFuture');
 Route::get('user/checkAvailability', 'UserController@checkAvailability');
 Route::get('user/getRequests', 'UserController@getRequests');
 Route::get('user/getFriendsCount', 'UserController@getFriendsCount');
@@ -50,13 +50,16 @@ Route::post('user/setNudges', 'UserController@setNudges');
 //SCHEDULE
 Route::get('google/getCalendars', 'GoogleController@getCalendars');
 Route::post('google/confirmCalendars', 'GoogleController@confirmCalendars');
-Route::get('google/pullEvents/{id}', 'GoogleController@pullEvents');
+Route::get('google/pullEvents/{id}', 'GoogleController@pullEvents');  //TODO: remove if not use
 Route::get('google/pullEvents', 'GoogleController@pullEvents');
 Route::get('google/refreshToken/{id}', 'GoogleController@refreshToken');
 
 //TODO
 Route::post('user/googleLogin', 'UserController@googleLogin');
 Route::get('facebook/getAccessToken', 'FacebookController@getAccessToken');
+
+Route::get('google/getProfile/{token}', 'GoogleController@getProfile');
+
 
 //CONTACTS
 Route::get('google/getContacts', 'GoogleController@getContacts');
@@ -65,5 +68,9 @@ Route::resource('user', 'UserController');
 Route::resource('event', 'GoogleEventController');
 Route::resource('google_calendar', 'GoogleCalendarController');
 
-//IGNORE: Other Project
+//CECS448 Project: Labcrasher
 Route::get('labcrasher', 'RoomController@index');
+Route::get('labcrasher/getClassSchedule', 'RoomController@getClassSchedule');
+Route::get('labcrasher/calcVacancies', 'RoomController@calcVacancies');
+Route::get('labcrasher/getAvailabilities/{date}/{time}', 'RoomController@getAvailabilities');
+Route::get('labcrasher/checkAndRemoveDup', 'RoomController@checkAndRemoveDup');

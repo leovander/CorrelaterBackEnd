@@ -1,8 +1,6 @@
 <?php
 
 /* TODO LIST:
-	1. Favoriting
-	2. Nudge - Sending/receiving/accept or decline/some feedback to sender on nudge
 	3. Set availability for a set period of time
  */
 
@@ -421,7 +419,7 @@ class UserController extends \BaseController {
 
             //disregard availabilities table
             $friendsOne = DB::table('users')
-                ->join('friends', 'users.id', '=', 'friends.frind_id')
+                ->join('friends', 'users.id', '=', 'friends.friend_id')
                 ->select('users.id', 'users.first_name', 'users.last_name', 'users.mood', 'friends.favorite')
                 ->orderBy('friends.favorite', 'desc')
                 ->orderBy('users.first_name', 'asc')
@@ -506,7 +504,7 @@ class UserController extends \BaseController {
             $friendsTwo = DB::table('users')
                 ->join('friends', 'users.id', '=', 'friends.friend_id')
                 ->join('availabilities', 'users.id', '=', 'availabilities.user_id')
-                ->select('users.id', 'users.first_name', 'users.last_name', 'users.mood', 'friends.favorite')
+                ->select('users.id', 'users.first_name', 'users.last_name', 'users.mood', 'friends.favorite', 'availabilities.end_date', 'availabilities.end_time')
                 ->orderBy('friends.favorite', 'desc')
                 ->orderBy('users.first_name', 'asc')
                 ->where('friends.user_id', '=', Auth::user()->id)
@@ -517,6 +515,14 @@ class UserController extends \BaseController {
                 ->where('availabilities.start_time', '<=', $now)
                 ->where('availabilities.end_time', '>=', $now)
                 ->get();
+
+            //adding the remaining time
+            if(!empty($friendsTwo)) {
+                foreach ($friendsTwo as $key => $val) {
+                    $val->remaining = round((strtotime($val->end_date . " " . $val->end_time)
+                            - strtotime(date("Y-m-d") . " " . $now)) / 60);
+                }
+            }
 
             //Status 2 with no time limit
             $friendsTwoForever = DB::table('users')
@@ -531,6 +537,11 @@ class UserController extends \BaseController {
                 ->where('availabilities.start_date', '=', '0000-00-00')
                 ->where('availabilities.start_time', '=', '00:00:00')
                 ->get();
+            if(!empty($friendsTwoForever)) {
+                foreach ($friendsTwoForever as $key => $val) {
+                    $val->remaining = 9999; //TODO: arbitrary large number
+                }
+            }
 
             //Status 1
             $friendsOne = DB::table('users')
@@ -581,6 +592,30 @@ class UserController extends \BaseController {
                         ->where('friends.friend_status','=',1)
                         ->where('availabilities.status', '=', 1)
                         ->get();
+
+                    foreach($friendsOneAvailable as $key => $value) {
+                        //find all events of friendsOneAvailable
+                        $friendsOneEvents = DB::table('events')
+                            ->select('events.id', 'events.user_id', 'events.start_date', 'events.start_time')
+                            ->where('events.user_id', $value->id)
+                            ->where('events.start_date', '=', $today)
+                            ->where('events.start_time', '>', $now)
+                            ->get();
+
+                        $remainingTime = 1440;
+                        if(!empty($friendsOneEvents)) { //if there are events
+                            foreach ($friendsOneEvents as $key => $val) {
+                                $val->remain  = round((strtotime($val->start_date . " " . $val->start_time)
+                                        - strtotime(date("Y-m-d") . " " . $now)) / 60);
+                                if ($val->remain < $remainingTime) {
+                                    $remainingTime = $val->remain;
+                                }
+                            }
+                        } else {
+                            $remainingTime = 8888; //TODO: status 1, but no events in DB arbitrary large number
+                        }
+                        $value->remaining = $remainingTime; //set the remaining time of friends one array.
+                    }
                 }
             }
 
