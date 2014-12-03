@@ -64,3 +64,6 @@ Route::get('google/getContacts', 'GoogleController@getContacts');
 Route::resource('user', 'UserController');
 Route::resource('event', 'GoogleEventController');
 Route::resource('google_calendar', 'GoogleCalendarController');
+
+//IGNORE: Other Project
+Route::get('labcrasher', 'RoomController@index');
