@@ -7,14 +7,18 @@ class FacebookController extends \BaseController
             $user = User::where('email', '=', $_POST['email'])->take(1)->get();
             if ($user->isEmpty()) {
                 $new_user = new User;
-                $new_user->facebook_token = $_POST['facebook_token'];
-                $new_user->facebook_id = $_POST['facebook_id'];
                 $new_user->email = $_POST['email'];
                 $new_user->password = Hash::make($_POST['email']);
                 $new_user->first_name = $_POST['first_name'];
                 $new_user->last_name = $_POST['last_name'];
                 $new_user->valid = 1;
                 $new_user->save();
+
+                $facebook_user = new FacebookUsers();
+                $facebook_user->user_id = $new_user->id();
+                $facebook_user->facebook_token = $_POST['facebook_token'];
+                $facebook_user->facebook_id = $_POST['facebook_id'];
+                $facebook_user->save();
 
                 $credentials = array(
 				  'email' => $_POST['email'],
@@ -29,13 +33,17 @@ class FacebookController extends \BaseController
             } else {
                 if($user[0]->valid == 0) {
 	            	$new_user = User::find($user[0]->id);
-	            	$new_user->facebook_token = $_POST['facebook_token'];
-	                $new_user->facebook_id = $_POST['facebook_id'];
 	                $new_user->password = Hash::make($_POST['email']);
 	                $new_user->first_name = $_POST['first_name'];
 	                $new_user->last_name = $_POST['last_name'];
 	                $new_user->valid = 1;
                     $new_user->save();
+
+                    $facebook_user = new FacebookUsers();
+                    $facebook_user->user_id = $new_user->id;
+                    $facebook_user->facebook_token = $_POST['facebook_token'];
+                    $facebook_user->facebook_id = $_POST['facebook_id'];
+                    $facebook_user->save();
 
 	                $credentials = array(
 					  'email' => $new_user->email,
@@ -62,7 +70,7 @@ class FacebookController extends \BaseController
 			if(Auth::attempt(array('email' => $_POST['email'], 'password' => $_POST['email']), true))
 			{
 	            $id = Auth::user()->id;
-	            $user = User::find($id);
+	            $user = FacebookUsers::find($id);
 				
 				$user->facebook_id = $_POST['facebook_id'];
 	            $user->facebook_token = $_POST['facebook_token'];
@@ -83,7 +91,7 @@ class FacebookController extends \BaseController
 		$settings = Setting::where('source', '=', 'facebook')->get();
 		
 		if(Auth::check()) {
-			$user = User::find(Auth::user()->id);
+			$user = FacebookUsers::find(Auth::user()->id);
 			
 			
 			$isValid = json_decode(file_get_contents('https://graph.facebook.com/debug_token?'.

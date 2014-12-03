@@ -5,6 +5,7 @@ DROP TABLE nudges;
 DROP TABLE events;
 DROP TABLE google_calendar;
 DROP TABLE google_users;
+DROP TABLE facebook_users;
 DROP TABLE users;
 
 CREATE TABLE settings (
@@ -43,6 +44,18 @@ CREATE TABLE google_users (
   updated_at datetime NOT NULL,
   PRIMARY KEY (id),
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE facebook_users (
+  id int(11) unsigned NOT NULL AUTO_INCREMENT,
+  user_id int(11) NOT NULL,
+  facebook_id varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+  facebook_token varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+  created_at datetime NOT NULL,
+  updated_at datetime NOT NULL,
+  PRIMARY KEY (id),
+  KEY user_id (user_id),
+  FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE friends (

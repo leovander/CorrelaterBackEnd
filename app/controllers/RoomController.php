@@ -17,17 +17,24 @@ class RoomController extends \BaseController
     }
 
     /**
-     * @param $date - the date in format: ####-##-##
-     * @param $time - the time in format: ##:##:##
+     * @param $date - the date in format: yyyy-mm-dd
+     * @param $time - the time in format: hh:mm:ss
      */
     public function getAvailabilities ($date, $time)
     {
-        //find day of week based on date given
-        $day_of_week = date('l', strtotime($date));
+        $now = date("H:i:s");
+        //default to TODAY, if no argument given
+        if ($date == null || $date = "today") {
+            $date = date("Y-m-d");
+        }
+
         //default to NOW, if no argument given
-        if ($time == null) {
+        if ($time == null || $time = "now") {
             $time = date("H:i:s");
         }
+
+        //find day of week based on date given
+        $day_of_week = date('l', strtotime($date));
 
         $url = 'http://www.csulb.edu/depts/enrollment/registration/class_schedule/Fall_2014/By_Subject/';
         $html = file_get_html($url);
@@ -41,21 +48,32 @@ class RoomController extends \BaseController
         $lastUpdate = DB::connection('mysql2')->table('settings')->get();
         if ($lastUpdate[0]->schedule_last_update == $updateDate && $lastUpdate[0]->url == $url) {
             //TODO
-            print("same, pass JSON file");
+            //print("same, pass JSON file");
         } else {
             $this->getClassSchedule();
             $this->checkAndRemoveDup();
             $this->calcAllVacancies();
         }
-        print($day_of_week);
+        //print($day_of_week);
         $availabilities = DB::connection('mysql2')
                     ->table('vacancies')
                     ->where('day', '=', $day_of_week)
-                    ->where('start', '>=', date("H:i:s", strtotime($time)))
-                    ->where('building', '=', 'VEC')
+                    ->where('start', '<=', date("H:i:s", strtotime($time)))
+                    ->where('end', '>', date("H:i:s", strtotime($time)))
                     ->get();
 
-        Helpers::pr($availabilities);
+        $maxRemaining = 0;
+        foreach ($availabilities as $key => $val) {
+            $val->remaining  = round((strtotime(date("Y-m-d")." ".$val->end)
+                    - strtotime(date("Y-m-d")." ".$now)) / 60);
+
+            if ($val->remaining > $maxRemaining) {
+                $maxRemaining = $val->remaining;
+            }
+            $val->maxRemaining = $maxRemaining;
+        }
+
+        return ($availabilities);
     }
 
     public function calcAllVacancies (){
