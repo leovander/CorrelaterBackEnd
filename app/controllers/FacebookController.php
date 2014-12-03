@@ -15,7 +15,7 @@ class FacebookController extends \BaseController
                 $new_user->save();
 
                 $facebook_user = new FacebookUsers();
-                $facebook_user->user_id = $new_user->id();
+                $facebook_user->user_id = $new_user->id;
                 $facebook_user->facebook_token = $_POST['facebook_token'];
                 $facebook_user->facebook_id = $_POST['facebook_id'];
                 $facebook_user->save();
@@ -27,6 +27,15 @@ class FacebookController extends \BaseController
 
 				if(Auth::attempt($credentials, true)) {
 				    $response['message'] = 'Account Created';
+				    
+				    $availability = new Availability();
+	                $availability->user_id = Auth::user()->id;
+	                $availability->start_date = "0000-00-00";
+	                $availability->end_date = "0000-00-00";
+	                $availability->start_time = "00:00:00";
+	                $availability->end_time = "00:00:00";
+	                $availability->status = 1;
+	                $availability->save();
 				} else {
 					$response['message'] = 'Could Not Login';
 				}		
@@ -52,6 +61,15 @@ class FacebookController extends \BaseController
 	
 					if(Auth::attempt($credentials, true)) {
 					    $response['message'] = 'Account Created';
+					    
+					    $availability = new Availability();
+		                $availability->user_id = Auth::user()->id;
+		                $availability->start_date = "0000-00-00";
+		                $availability->end_date = "0000-00-00";
+		                $availability->start_time = "00:00:00";
+		                $availability->end_time = "00:00:00";
+		                $availability->status = 1;
+		                $availability->save();
 					} else {
 						$response['message'] = 'Could Not Login';
 					}

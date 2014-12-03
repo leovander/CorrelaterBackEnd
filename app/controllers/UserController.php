@@ -105,6 +105,14 @@ class UserController extends \BaseController {
             if (!empty($google[0])) {
                 $response['google'] = 'Google User';
             }
+            
+            $facebook = DB::table('facebook_users')
+                ->select('*')
+                ->where('user_id', '=', Auth::user()->id)
+                ->get();
+            if (!empty($facebook[0])) {
+                $response['facebook'] = 'Facebook User';
+            }
         } else {
             $response['message'] = 'Not Logged In';
         }
@@ -628,7 +636,9 @@ class UserController extends \BaseController {
             if(!empty($friendsTwoForever)) {
                 $allAvailableFriends = array_merge($allAvailableFriends, $friendsTwoForever);
             }
-
+			
+			$favorite = array();
+			$firstName = array();
             // Obtain a list of columns
             foreach ($allAvailableFriends as $key => $row) {
                 $favorite[$key]  = $row->favorite;

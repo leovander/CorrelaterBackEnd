@@ -39,6 +39,15 @@ class GoogleController extends \BaseController
 	
 					if(Auth::attempt($credentials, true)) {
 					    $response['message'] = 'Account Created';
+					    
+					    $availability = new Availability();
+		                $availability->user_id = Auth::user()->id;
+		                $availability->start_date = "0000-00-00";
+		                $availability->end_date = "0000-00-00";
+		                $availability->start_time = "00:00:00";
+		                $availability->end_time = "00:00:00";
+		                $availability->status = 1;
+		                $availability->save();
 					} else {
 						$response['message'] = 'Could Not Login';
 					}		
@@ -67,6 +76,15 @@ class GoogleController extends \BaseController
 		
 						if(Auth::attempt($credentials, true)) {
 						    $response['message'] = 'Account Created';
+						    
+						    $availability = new Availability();
+			                $availability->user_id = Auth::user()->id;
+			                $availability->start_date = "0000-00-00";
+			                $availability->end_date = "0000-00-00";
+			                $availability->start_time = "00:00:00";
+			                $availability->end_time = "00:00:00";
+			                $availability->status = 1;
+			                $availability->save();
 						} else {
 							$response['message'] = 'Could Not Login';
 						}
