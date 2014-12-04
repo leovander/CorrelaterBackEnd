@@ -454,6 +454,13 @@ class UserController extends \BaseController {
                 ->where('availabilities.start_time', '=', '00:00:00')
                 ->get();
 
+            $friendsTwoForeverId = array();
+            if(!empty($friendsTwoForever)) {
+                foreach($friendsTwoForever as $friend) {
+                    array_push($friendsTwoForeverId, $friend->id);
+                }
+            }
+
             //Status 0 with no time limit
             $friendsZeroForever = DB::table('users')
                 ->join('friends', 'users.id', '=', 'friends.friend_id')
@@ -481,6 +488,7 @@ class UserController extends \BaseController {
                 ->select('users.id', 'users.first_name', 'users.last_name', 'users.mood', 'friends.favorite')
                 ->orderBy('friends.favorite', 'desc')
                 ->orderBy('users.first_name', 'asc')
+                ->whereNotIn('users.id', $friendsTwoForeverId)
                 ->where('friends.user_id', '=', Auth::user()->id)
                 ->where('friends.friend_status', '=', 1)
                 ->get();
