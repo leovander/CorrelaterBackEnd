@@ -422,10 +422,60 @@ class UserController extends \BaseController {
 
         if (Auth::check())
         {
+            $allAvailableFriends = array();
             $friendsOneAvailable = array();
             $busyFriends = array();
 
-            //disregard availabilities table
+            $allConfirmedFriends = DB::table('users')
+                ->join('friends', 'users.id', '=', 'friends.friend_id')
+                ->join('availabilities', 'users.id', '=', 'availabilities.user_id')
+                ->select('users.id', 'users.first_name', 'users.last_name', 'users.mood', 'friends.favorite')
+                ->where('friends.user_id', '=', Auth::user()->id)
+                ->where('friends.friend_status','=',1)
+                ->get();
+
+            //clean up the status in the availabilities table
+            foreach ($allConfirmedFriends as $friend) {
+                $this->checkAvailabilityHelper($friend->id);
+            }
+
+            //Status Legend: 2-free, 1-schedule, 0-busy(invisible)
+            //Status 2 with no time limit
+            $friendsTwoForever = DB::table('users')
+                ->join('friends', 'users.id', '=', 'friends.friend_id')
+                ->join('availabilities', 'users.id', '=', 'availabilities.user_id')
+                ->select('users.id', 'users.first_name', 'users.last_name', 'users.mood', 'friends.favorite')
+                ->orderBy('friends.favorite', 'desc')
+                ->orderBy('users.first_name', 'asc')
+                ->where('friends.user_id', '=', Auth::user()->id)
+                ->where('friends.friend_status','=',1)
+                ->where('availabilities.status', '=', 2)
+                ->where('availabilities.start_date', '=', '0000-00-00')
+                ->where('availabilities.start_time', '=', '00:00:00')
+                ->get();
+
+            //Status 0 with no time limit
+            $friendsZeroForever = DB::table('users')
+                ->join('friends', 'users.id', '=', 'friends.friend_id')
+                ->join('availabilities', 'users.id', '=', 'availabilities.user_id')
+                ->select('users.id')
+                ->orderBy('friends.favorite', 'desc')
+                ->orderBy('users.first_name', 'asc')
+                ->where('friends.user_id', '=', Auth::user()->id)
+                ->where('friends.friend_status','=',1)
+                ->where('availabilities.status', '=', 0)
+                ->where('availabilities.start_date', '=', '0000-00-00')
+                ->where('availabilities.start_time', '=', '00:00:00')
+                ->get();
+
+            $friendsZeroForeverId = array();
+            if (!empty($friendsZeroForever)) {
+                foreach($friendsZeroForever as $friend) {
+                    array_push($friendsZeroForeverId, $friend->id);
+                }
+            }
+
+            //Status 1, ignore availability status due to projecting future
             $friendsOne = DB::table('users')
                 ->join('friends', 'users.id', '=', 'friends.friend_id')
                 ->select('users.id', 'users.first_name', 'users.last_name', 'users.mood', 'friends.favorite')
@@ -441,7 +491,7 @@ class UserController extends \BaseController {
                     array_push($friendsOneId, $friend->id);
                 }
 
-                //findi the busy friends among the friends with schedule
+                //find the busy friends among the friends with schedule
                 $busyFriends = DB::table('events')
                     ->select('events.id', 'events.user_id')
                     ->whereIn('events.user_id', $friendsOneId)
@@ -458,25 +508,44 @@ class UserController extends \BaseController {
                 //if busyFriend is empty, then friendOneAvailable = friendOne
                 $friendsOneAvailableId = array_diff($friendsOneId, $busyFriendsId);
 
+                //remove all friends who are status = 0 with no time limit
+                $friendsOneAvailableId = array_diff($friendsOneAvailableId, $friendsZeroForeverId);
+
                 if (!empty($friendsOneAvailableId)) {
                     //find only the available friends (schedule) based on the friendsOneAvailableId
                     $friendsOneAvailable = DB::table('users')
                         ->join('friends', 'users.id', '=', 'friends.friend_id')
-                        ->join('availabilities', 'users.id', '=', 'availabilities.user_id')
                         ->select('users.id', 'users.first_name', 'users.last_name', 'users.mood', 'friends.favorite')
                         ->orderBy('friends.favorite', 'desc')
                         ->orderBy('users.first_name', 'asc')
                         ->whereIn('users.id', $friendsOneAvailableId)
                         ->where('friends.user_id', '=', Auth::user()->id)
                         ->where('friends.friend_status','=',1)
-                        ->where('availabilities.status', '=', 1)
                         ->get();
                 }
             }
-            if (!empty($friendsOneAvailable)) {
+
+            if(!empty($friendsTwoForever)) {
+                $allAvailableFriends = array_merge($friendsTwoForever);
+            }
+            if(!empty($friendsOneAvailable)) {
+                $allAvailableFriends = array_merge($allAvailableFriends, $friendsOneAvailable);
+            }
+
+            $favorite = array();
+            $firstName = array();
+            // Obtain a list of columns
+            foreach ($allAvailableFriends as $key => $row) {
+                $favorite[$key]  = $row->favorite;
+                $firstName[$key] = strtolower($row->first_name); //case to lowercase for sorting
+            }
+            //sort by favorite then first name
+            array_multisort($favorite, SORT_DESC, $firstName, SORT_ASC, $allAvailableFriends);
+
+            if(!empty($allAvailableFriends)) {
                 $response['message'] = 'Success';
-                $response['count'] = count($friendsOneAvailable);
-                $response['friends'] = $friendsOneAvailable;
+                $response['count'] = count($allAvailableFriends);
+                $response['friends'] = $allAvailableFriends;
             } else {
                 $response['message'] = 'Fail';
                 $response['count'] = 0;
@@ -610,7 +679,7 @@ class UserController extends \BaseController {
                             ->where('events.start_time', '>', $now)
                             ->get();
 
-                        $remainingTime = 1440;
+                        $remainingTime = 1440;  //60min * 24hr
                         if(!empty($friendsOneEvents)) { //if there are events
                             foreach ($friendsOneEvents as $key => $val) {
                                 $val->remain  = round((strtotime($val->start_date . " " . $val->start_time)
