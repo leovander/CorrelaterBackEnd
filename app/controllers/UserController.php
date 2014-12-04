@@ -483,15 +483,26 @@ class UserController extends \BaseController {
             }
 
             //Status 1, ignore availability status due to projecting future
-            $friendsOne = DB::table('users')
-                ->join('friends', 'users.id', '=', 'friends.friend_id')
-                ->select('users.id', 'users.first_name', 'users.last_name', 'users.mood', 'friends.favorite')
-                ->orderBy('friends.favorite', 'desc')
-                ->orderBy('users.first_name', 'asc')
-                ->whereNotIn('users.id', $friendsTwoForeverId)
-                ->where('friends.user_id', '=', Auth::user()->id)
-                ->where('friends.friend_status', '=', 1)
-                ->get();
+            if(empty($friendsTwoForeverId)) {
+                $friendsOne = DB::table('users')
+                    ->join('friends', 'users.id', '=', 'friends.friend_id')
+                    ->select('users.id', 'users.first_name', 'users.last_name', 'users.mood', 'friends.favorite')
+                    ->orderBy('friends.favorite', 'desc')
+                    ->orderBy('users.first_name', 'asc')
+                    ->where('friends.user_id', '=', Auth::user()->id)
+                    ->where('friends.friend_status', '=', 1)
+                    ->get();
+            } else {
+                $friendsOne = DB::table('users')
+                    ->join('friends', 'users.id', '=', 'friends.friend_id')
+                    ->select('users.id', 'users.first_name', 'users.last_name', 'users.mood', 'friends.favorite')
+                    ->orderBy('friends.favorite', 'desc')
+                    ->orderBy('users.first_name', 'asc')
+                    ->whereNotIn('users.id', $friendsTwoForeverId)
+                    ->where('friends.user_id', '=', Auth::user()->id)
+                    ->where('friends.friend_status', '=', 1)
+                    ->get();
+            }
 
             if (!empty($friendsOne)) {
                 $friendsOneId = array();
