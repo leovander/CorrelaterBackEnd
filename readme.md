@@ -1,23 +1,28 @@
-## Laravel PHP Framework
+#Corral - Team 5
 
-[![Build Status](https://travis-ci.org/laravel/framework.svg)](https://travis-ci.org/laravel/framework)
-[![Total Downloads](https://poser.pugx.org/laravel/framework/downloads.svg)](https://packagist.org/packages/laravel/framework)
-[![Latest Stable Version](https://poser.pugx.org/laravel/framework/v/stable.svg)](https://packagist.org/packages/laravel/framework)
-[![Latest Unstable Version](https://poser.pugx.org/laravel/framework/v/unstable.svg)](https://packagist.org/packages/laravel/framework)
-[![License](https://poser.pugx.org/laravel/framework/license.svg)](https://packagist.org/packages/laravel/framework)
+Back-end Code Repository
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable, creative experience to be truly fulfilling. Laravel attempts to take the pain out of development by easing common tasks used in the majority of web projects, such as authentication, routing, sessions, and caching.
+CECS 491A: Senior Project
 
-Laravel aims to make the development process a pleasing one for the developer without sacrificing application functionality. Happy developers make the best code. To this end, we've attempted to combine the very best of what we have seen in other web frameworks, including frameworks implemented in other languages, such as Ruby on Rails, ASP.NET MVC, and Sinatra.
+California State University, Long Beach
 
-Laravel is accessible, yet powerful, providing powerful tools needed for large, robust applications. A superb inversion of control container, expressive migration system, and tightly integrated unit testing support give you the tools you need to build any application with which you are tasked.
+Professor Mike Boctor
 
-## Official Documentation
+##Online Resource
+- [Online API Reference](http://corral.readme.io/)
 
-Documentation for the entire framework can be found on the [Laravel website](http://laravel.com/docs).
-
-### Contributing To Laravel
-
-** All issues and pull requests should be filed on the [laravel/framework](http://github.com/laravel/framework) repository.**
-
-test
+##Team Members
+- Alex Bu [Email](mailto:atb91590@yahoo.com)
+  - Android Developer
+- Nicholas Gallo [Email](mailto:libregkd@gmail.com)
+  - Developer
+- Joaquin Gonzalez [Email](mailto:joaquingonz.7@gmail.com)
+  - Anroid Developer
+- Nicholas Kwong [Email](mailto:nmkwong@gmail.com)
+  - iOS Developer
+- Israel Torres [Email](mailto:itorres1490@gmail.com)
+  - SCRUM Master
+- Gyngai Ung [Email](mailto:gyngaiu@gmail.com)
+  - Developer
+- Brandon Whitney [Email](mailto:brandontwhitney@gmail.com)
+  - Unity Developer
