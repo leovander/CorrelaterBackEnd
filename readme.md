@@ -2,7 +2,7 @@
 
 Back-end Code Repository
 
-CECS 491A: Senior Project
+CECS 491A: Senior Project - Fall 2014
 
 California State University, Long Beach
 
