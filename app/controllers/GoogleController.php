@@ -2,11 +2,11 @@
 
 class GoogleController extends \BaseController
 {
-	/**
-	 * Show the form for creating a new resource.
-	 *
-	 * @return Response
-	 */
+    /**
+     * precondition: the user must have existing Google account
+     * postcondition: create Coral app account with given Google credential
+     * @return [json] [response]
+     */
 	public function create() {
 		$response = array();
 		if(isset($_POST['google_access_token'])) {
@@ -100,7 +100,12 @@ class GoogleController extends \BaseController
         header('Content-type: application/json');
         return json_encode($response);
     }
-    
+
+    /**
+     * precondition: the user must be a Google account user and is an existing Corral app user
+     * postcondition: log the user into the app
+     * @return [json] [response]
+     */
     public function login(){
 		if(isset($_POST['google_access_token'])) {
 			$profile = $this->getProfile($_POST['google_access_token']);
@@ -129,6 +134,12 @@ class GoogleController extends \BaseController
 		return json_encode($response);
 	}
 
+    /**
+     * precondition: the user must be a Google account user and is an existing Corral app user
+     * postcondition: return user profile
+     * @param  [String] $access_token [google access token]
+     * @return [json] [response]
+     */
 	public function getProfile($access_token) {
 		$request_url = 'https://www.googleapis.com/oauth2/v2/userinfo';
 		$profile = file_get_contents($request_url.'?access_token='.$access_token);
@@ -142,7 +153,13 @@ class GoogleController extends \BaseController
         return $profile;
     }
 
-    //Helper function: Get Google Token Info for expiration time
+    /**
+     * precondition: the id of the user must exist in db
+     * postcondition: refresh the access token if its expiration time is less than 10 mins (600 secs)
+     *               return true if the access token of the user is valid, else return false
+     * @param  [int]  $id [ID of the user]
+     * @return boolean [true if the token is valid, esle false]
+     */
     public function isValidToken($id)
     {
         $user = GoogleUsers::find($id);
@@ -166,7 +183,12 @@ class GoogleController extends \BaseController
         }
     }
 
-    //Helper function: Refresh Google Access Token when the old Access Token expired
+    /**
+     * Helper function: Refresh Google Access Token when the old Access Token expired
+     * precondition: the user must be a Google account user and is an existing Corral app user
+     * postcondition: refresh google access token
+     * @param  [int] $id [ID of user]
+     */
     public function refreshToken($id)
     {
         $user = GoogleUsers::find($id);
@@ -185,18 +207,19 @@ class GoogleController extends \BaseController
 
         $response = json_decode(curl_exec($ch));
 
-//        if (curl_getinfo($ch)['http_code'] == '200') {
-            $user->google_access_token = $response->access_token;
-            $user->google_id_token = $response->id_token;
-            $user->save();
-            curl_close($ch);
-//			return true;
-//        } else {
-//        	curl_close($ch);
-//			return false;
-//        }
+        $user->google_access_token = $response->access_token;
+        $user->google_id_token = $response->id_token;
+        $user->save();
+        curl_close($ch);
+
     }
 
+    /**
+     * precondition: url must be a valid url
+     * postcondition: return the json object of curl http request
+     * @param  [String] $url [URL of the request]
+     * @return [json] [ret]
+     */
     function get_my_url_contents($url)
     {
         $crl = curl_init();
@@ -209,6 +232,12 @@ class GoogleController extends \BaseController
         return $ret;
     }
 
+    /**
+     * precondition: the user must be a Google account user and is an existing Corral app user
+     *               user must be logged in
+     * postcondition: return a list of calendars name that the user has in his/her Google calendar
+     * @return [type] [description]
+     */
     public function getCalendars()
     {
         if(Auth::check()) {
@@ -227,8 +256,7 @@ class GoogleController extends \BaseController
                     $this->refreshToken($id);
                 }
             }
-            //TODO: modify for testing
-//            $calendars = (array)json_decode(file_get_contents('https://www.googleapis.com/calendar/v3/users/me/calendarList?access_token=' . $user->google_access_token));
+
             $ch = curl_init('https://www.googleapis.com/calendar/v3/users/me/calendarList?access_token=' . $user->google_access_token);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             $calendars = curl_exec($ch);
@@ -244,11 +272,16 @@ class GoogleController extends \BaseController
             }
         }
         $response['calendars'] = $cal_ids;
-        //header('Content-type: application/json');
+
         return json_encode($response);
     }
-    
-    //User has selected x,y,z calendars
+
+    /**
+     * precondition: the user must be a Google account user and is an existing Corral app user
+     *               user must be logged in
+     * postcondition: save the calendar id that user confirmed to db
+     * @return [json] [response]
+     */
     public function confirmCalendars() {
         if(Auth::check()) {
             $id = Auth::user()->id;
@@ -284,7 +317,12 @@ class GoogleController extends \BaseController
         return json_encode($response);
     }
 
-	//Can be called with assumption that getCalendars ran successfully
+    /**
+     * precondition: getCalendars() and confirmCalendars() functions successfully executed
+     * postcondition: save the events 30 days from today of the given calendarId into db
+     *                keep the events in db and Google calendar in sync
+     * @return [json] [response]
+     */
     public function pullEvents()
     {
         if(Auth::check()) {
@@ -490,6 +528,11 @@ class GoogleController extends \BaseController
         return json_encode($response);
     }
 
+    /**
+     * precondition: all existing events are to be deleted.
+     * postcondition: delete all calendars and event from db, and pull 30 days of events anew
+     * @param  [int] $id [ID of the user for which the events are pulled]
+     */
     public function pullAllEvents ($id) {
         $user = GoogleUsers::find($id);
         $calendarArray = array();
@@ -557,6 +600,14 @@ class GoogleController extends \BaseController
         $this->storeEventsInDb ($eventsToStore);
     }
 
+    /**
+     * precondition: pullEvents() function sucessfully executed
+     * postcondition: calculate the event start/end date and time, and save to eventsToStore array
+     * @param  [array] $events [array of events object to be saved to $eventsToStore array]
+     * @param  [array] $calendar [calendars object]
+     * @param  [object] $user [user object]
+     * @param  [object] &$eventsToStore [array of events to be stored to db, pass as reference]
+     */
     public function saveEventsArray ($events, $calendar, $user, &$eventsToStore) {
         foreach ($events['items'] as $event) {
             $today = strtotime(date('Y-m-d'));
@@ -568,7 +619,7 @@ class GoogleController extends \BaseController
                 $eventStart = explode('T', $event->start->date);
                 $eventStartTime = '00:00:00';
             } else {
-                $eventStart[0] = $today; //TODO: placeholder for deleted event
+                $eventStart[0] = $today; //placeholder for deleted event
             }
 
             if (isset($event->end->dateTime)) {
@@ -578,7 +629,7 @@ class GoogleController extends \BaseController
                 $eventEnd = explode('T', $event->end->date);
                 $eventEndTime = '23:59:59';
             } else {
-                $eventStart[0] = $today; //TODO: placeholder for deleted event
+                $eventStart[0] = $today; //placeholder for deleted event
             }
 
             if (strtotime($eventStart[0]) >= $today) {
@@ -597,6 +648,11 @@ class GoogleController extends \BaseController
         }
     }
 
+    /**
+     * precondition: $eventToStore must not be empty
+     * postcondition: save the events into db
+     * @param  [array] $eventsToStore [array of events object]
+     */
     public function storeEventsInDb ($eventsToStore) {
         foreach ($eventsToStore as $cal_event) {
             $new_event = new GoogleEvent;
@@ -614,6 +670,11 @@ class GoogleController extends \BaseController
         }
     }
 
+    /**
+     * precondition: user must be logged in
+     * postcondition: return all emails that are "home" and "other" categories
+     * @return [json] [response]
+     */
     public function getContacts () {
         if(Auth::check()) {
             $id = Auth::user()->id;

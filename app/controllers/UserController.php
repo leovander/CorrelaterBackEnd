@@ -1,10 +1,13 @@
 <?php
 
-/* TODO LIST:
-	3. Set availability for a set period of time
- */
-
 class UserController extends \BaseController {
+    /**
+     * precondition: email address has to be one that is not yet associated
+     *               with any account in db.
+     * postcondition: account created with given email, password, first_name,
+     *               and last_name.
+     * @return [json] [response]
+     */
     public function create()
     {
         $response = array();
@@ -68,6 +71,11 @@ class UserController extends \BaseController {
         return json_encode($response);
     }
 
+    /**
+     * precondition: user must be a current user
+     * postcondition: log  the user into the app
+     * @return [json] [response]
+     */
     public function login(){
         if(Auth::attempt(array('email' => $_POST['email'], 'password' => $_POST['password']), true))
         {
@@ -81,6 +89,12 @@ class UserController extends \BaseController {
         return json_encode($response);
     }
 
+    /**
+     * precondition: user must already log into the app
+     * postcondition: return user's information, status, and whether
+     *               the user is a Google or Facebook user
+     * @return [json] [response]
+     */
     public function getMyInfo()
     {
         if(Auth::check()) {
@@ -121,7 +135,11 @@ class UserController extends \BaseController {
         return json_encode($response);
     }
 
-    //Check if friend with given email exists
+    /**
+     * precondition: valid email address
+     * postcondition: if user found in db, return user's information
+     * @return [json] [response]
+     */
     public function checkUserExists()
     {
         $friend = User::where('email','=',$_POST['email'])->get();
@@ -151,8 +169,14 @@ class UserController extends \BaseController {
         return json_encode($response);
     }
 
-    //Call this if user_info was returned from checkUserExists()
-    //frienda is the sender, friendb is the receiver
+    /**
+     * precondition: friendId must exist in db
+     * postcondition: add friendship with status 0 (not confirmed)
+     *               frienda = sender
+     *               friendb = receiver
+     * @param [int] $friendId [ID of requested friend]
+     * @return [json] [response]
+     */
     public function addFriend($friendId)
     {
         if(Auth::check()) {
@@ -178,7 +202,13 @@ class UserController extends \BaseController {
         return json_encode($response);
     }
 
-    //accepts a friend request
+    /**
+     * precondition: user must be logged in
+     *               $friendId must exist in db
+     * postcondition: accept the friend request, set friendship status to 1
+     * @param  [int] $friendId [ID of friend who send request]
+     * @return [json] [response]
+     */
     public function acceptFriend($friendId)
     {
         if(Auth::check()) {
@@ -197,7 +227,13 @@ class UserController extends \BaseController {
         return json_encode($response);
     }
 
-    //Delete/Reject a friend/friend request
+    /**
+     * precondition: user must be logged in
+     *               $friendId must exist in db
+     * postcondition: remove the friendship or reject a friend request
+     * @param  [int] $friendId [ID of friend that friendship is to be deleted]
+     * @return [json] [response]
+     */
     public function deleteFriend($friendId)
     {
         if(Auth::check()) {
@@ -218,7 +254,12 @@ class UserController extends \BaseController {
         return json_encode($response);
     }
 
-    //Send email invitation for non-user
+    /**
+     * precondition: user must be logged in
+     *               email address must be one not yet in db (non-user)
+     * postcondition: email invitation is sent to the email address
+     * @return [json] [response]
+     */
     public function sendInvite()
     {
         if(Auth::check()) {
@@ -244,6 +285,11 @@ class UserController extends \BaseController {
         return json_encode($response);
     }
 
+    /**
+     * precondition: user must be logged in
+     * postcondition: log the user out of the app
+     * @return [json] [response]
+     */
     public function logout()
     {
         if(Auth::check()) {
@@ -257,6 +303,11 @@ class UserController extends \BaseController {
         return json_encode($response);
     }
 
+    /**
+     * precondition: user must be logged in
+     * postcondition: return all friends' information and the number of friends
+     * @return [json] [response]
+     */
     public function getFriends()
     {
         if(Auth::check()) {
@@ -280,6 +331,11 @@ class UserController extends \BaseController {
         return json_encode($response);
     }
 
+    /**
+     * precondition: user must be logged in
+     * postcondition: return the number of friends
+     * @return [json] [response]
+     */
     public function getFriendsCount() {
         if(Auth::check()) {
             $count = Friend::where('user_id', '=', Auth::user()->id)
@@ -296,7 +352,11 @@ class UserController extends \BaseController {
         return json_encode($response);
     }
 
-    //Return only friends who sent request to the user.
+    /**
+     * precondition: user must be logged in
+     * postcondition: return friends' info who submit friend request to the user
+     * @return [json] [response]
+     */
     public function getRequests()
     {
         if(Auth::check()) {
@@ -321,99 +381,12 @@ class UserController extends \BaseController {
     }
 
 
-    public function getAvailable()
-    {
-        if (Auth::check()) {
-            //2-free, 1-schedule, 0-busy(invisible)
-            $friendsTwo = DB::table('users')
-                ->join('friends', 'users.id', '=', 'friends.friend_id')
-                ->select('users.id', 'users.first_name', 'users.last_name', 'users.mood', 'friends.favorite')
-                ->orderBy('friends.favorite', 'desc')
-                ->orderBy('users.first_name', 'asc')
-                ->where('friends.user_id', '=', Auth::user()->id)
-                ->where('friends.friend_status','=',1)
-                ->where('users.status', '=', 2)
-                ->get();
-
-            $friendsOne = DB::table('users')
-                ->join('friends', 'users.id', '=', 'friends.friend_id')
-                ->select('user  s.id', 'users.first_name', 'users.last_name', 'users.mood', 'friends.favorite')
-                ->orderBy('friends.favorite', 'desc')
-                ->orderBy('users.first_name', 'asc')
-                ->where('friends.user_id', '=', Auth::user()->id)
-                ->where('friends.friend_status','=',1)
-                ->where('users.status', '=', 1)
-                ->get();
-
-            $friendsOneId = array();
-
-            foreach ($friendsOne as $friend) {
-                array_push($friendsOneId, $friend->id);
-            }
-
-            $today = date("Y-m-d");
-            $now = date("H:i:s");
-            $busyFriendsId = array();
-
-            if (!empty($friendsOneId)) {
-                $busyFriends = DB::table('events')
-                    ->select('events.id', 'events.user_id')
-                    ->whereIn('events.user_id', $friendsOneId)
-                    ->where('events.start_date', '=', $today)
-                    ->where('events.start_time', '<', $now)
-                    ->where('events.end_time', '>', $now)
-                    ->get();
-
-                foreach ($busyFriends as $people) {
-                    array_push($busyFriendsId, $people->user_id);
-                }
-            }
-
-            $friendsOneAvailableId = array_diff($friendsOneId, $busyFriendsId);
-
-            if (!empty($friendsOneAvailableId)) {
-                //find only the available friends (schedule) based on the friendsOneAvailableId
-                $friendsOneAvailable = DB::table('users')
-                    ->join('friends', 'users.id', '=', 'friends.friend_id')
-                    ->select('users.id', 'users.first_name', 'users.last_name', 'users.mood', 'friends.favorite')
-                    ->orderBy('friends.favorite', 'desc')
-                    ->orderBy('users.first_name', 'asc')
-                    ->whereIn('users.id', $friendsOneAvailableId)
-                    ->where('friends.user_id', '=', Auth::user()->id)
-                    ->where('friends.friend_status','=',1)
-                    ->where('users.status', '=', 1)
-                    ->get();
-
-                $allAvailFriends = array();
-
-                $allAvailableFriends = array_merge($friendsTwo, $friendsOneAvailable);
-            } else {
-                $allAvailableFriends = $friendsTwo;
-            }
-
-            if (!empty($allAvailableFriends)) {
-                $response['message'] = 'Success';
-                $response['count'] = count($allAvailableFriends);
-                $response['friends'] = $allAvailableFriends;
-            } else {
-                $response['message'] = 'Fail';
-                $response['count'] = 0;
-                $response['friends'] = "";
-            }
-
-        } else {
-            $response['message'] = 'Not Logged In';
-        }
-
-//		header('Content-type: application/json');
-        return json_encode($response);
-    }
-
     /**
-     * Find friends who are available in the next X days
-     * 1. Get all confirmed friends based on schedule only, on the given date and time
-     * 2. Remove the busy from the schedule friends
-     * 3. Resulting in availableFriends
+     * precondition: user must be logged in
+     *               date and time must be in the future
+     * postcondition: return list of friends who are available based on given date and time
+     *               sorted by the favorite friends then by first name
+     * @return [json] [response]
      */
     public function getAvailableFuture()
     {
@@ -575,6 +548,11 @@ class UserController extends \BaseController {
         return json_encode($response);
     }
 
+    /**
+     * precondition: user must be logged in
+     * postcondition: return the list of friends who are available at the moment
+     * @return [json] [response]
+     */
     public function getAvailableV2()
     {
         if (Auth::check()) {
@@ -635,7 +613,7 @@ class UserController extends \BaseController {
                 ->get();
             if(!empty($friendsTwoForever)) {
                 foreach ($friendsTwoForever as $key => $val) {
-                    $val->remaining = 9999; //TODO: arbitrary large number
+                    $val->remaining = 9999; //arbitrary large number
                 }
             }
 
@@ -708,7 +686,7 @@ class UserController extends \BaseController {
                                 }
                             }
                         } else {
-                            $remainingTime = 8888; //TODO: status 1, but no events in DB arbitrary large number
+                            $remainingTime = 8888; //status 1, but no events in DB arbitrary large number
                         }
                         $value->remaining = $remainingTime; //set the remaining time of friends one array.
                     }
@@ -750,10 +728,11 @@ class UserController extends \BaseController {
     }
 
     /**
-     * Helper function to check availabilities status
-     *   If end_time > now, then leave as is
-     *   Otherwise, change the status back to 1 (schedule mode)
-     *   Return the Mode and the remaining minutes
+     * precondition: user must be logged in
+     * postcondition: change user's availability status to schedule mode after
+     *               the availability time of a given mode is expired,
+     *               otherwise return the mode and the remaining time
+     * @return [json] [response]
      */
     public function checkAvailability () {
         if(Auth::check()) {
@@ -765,6 +744,14 @@ class UserController extends \BaseController {
         return json_encode($response);
     }
 
+    /**
+     * precondition: $id must exist in db
+     * postcondition: change user's availability status to schedule mode after
+     *               the availability time of a given mode is expired,
+     *               otherwise return the mode and the remaining time
+     * @param  [int] $id [user ID]
+     * @return [json] [response]
+     */
     public function checkAvailabilityHelper ($id) {
         $availability = DB::table('availabilities')
             ->where('availabilities.user_id', '=', $id)
@@ -813,6 +800,10 @@ class UserController extends \BaseController {
         return json_encode($response);
     }
 
+    /**
+     * precondition: user must be logged in
+     * postcondition: set the mood message of the user based on input
+     */
     public function setMood()
     {
         $mood = $_POST['mood'];
@@ -835,6 +826,13 @@ class UserController extends \BaseController {
         return json_encode($response);
     }
 
+    /**
+     * precondition: user must be logged in
+     *               $friendId must exist in db
+     * postcondition: set the given friend based on ID as favorite friend
+     * @param [int] $friendId [ID of friend to be set as favorite]
+     * @return [json] [reponse]
+     */
     public function setFavorite($friendId)
     {
         if(Auth::check()) {
@@ -860,6 +858,11 @@ class UserController extends \BaseController {
         return json_encode($response);
     }
 
+    /**
+     * precondition: user must be logged in
+     * postcondition: return all the nudges the are sent to the user
+     * @return [json] [response]
+     */
     public function getNudges()
     {
         if(Auth::check()) {
@@ -883,6 +886,11 @@ class UserController extends \BaseController {
         return json_encode($response);
     }
 
+    /**
+     * precondition: user must be logged in
+     * postcondition: sent a nudge to a friend, with the given friendId and message
+     * @return [json] [response]
+     */
     public function setNudges() {
         $message = $_POST['message'];
         $receiverId = $_POST['receiver_id'];
@@ -913,6 +921,12 @@ class UserController extends \BaseController {
         return json_encode($response);
     }
 
+    /**
+     * precondition: user must be logged in
+     * postcondition: delete the nudge
+     * @param  [int] $senderId [ID of the friend who sent nudge]
+     * @return [json] [response]
+     */
     public function deleteNudge($senderId) {
         if(Auth::check()) {
             DB::table('nudges')
@@ -925,7 +939,12 @@ class UserController extends \BaseController {
         return json_encode($response);
     }
 
-    //Check to see if user already sent nudge to the receiverId
+    /**
+     * precondition: user must be logged in
+     * postcondition: check to see if user already sent nudge to the receiverId
+     * @param  [int]  $receiverId [ID of the friend who receive nudge]
+     * @return [Array] [response]
+     */
     public function isNudgeSet($receiverId) {
         if (Auth::check()) {
             $nudge = DB::table('nudges')
@@ -945,6 +964,10 @@ class UserController extends \BaseController {
         return $response;
     }
 
+    /**
+     * precondition: user must be logged in
+     * postcondition: set the user's availability based on the given date and time
+     */
     public function setTimeAvailability () {
         $minutes = $_POST['time'];
         $status = $_POST['status'];
@@ -983,7 +1006,12 @@ class UserController extends \BaseController {
         return json_encode($response);
     }
 
-    //TODO: to remove, this is for the http://e-wit.co.uk/correlate/submit.html page
+    /**
+     * precondition: user must have Google account, and user must be existing Corral app user
+     * postcondition: allow user to log in
+     * note: this is for the testing page: http://e-wit.co.uk/correlate/submit.html
+     * @return [json] [response]
+     */
     public function googleLogin(){
         if(Auth::attempt(array('email' => $_POST['email'], 'password' => $_POST['email']), true))
         {

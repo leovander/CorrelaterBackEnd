@@ -25,14 +25,14 @@ class RoomController extends \BaseController
         $now = date("H:i:s");
 
         //default to TODAY, if no argument given
-        if ($date == "today") {
+        if ($date == "today" || $date == "undefined") {
             $date = date("Y-m-d");
         } else {
             $date= date("Y-m-d", strtotime($date));
         }
 
         //default to NOW, if no argument given
-        if ($time == "now") {
+        if ($time == "now" || $time == "undefined") {
             $time = date("H:i:s");
         } else {
             $time = date("H:i:s", strtotime($time));
@@ -59,7 +59,7 @@ class RoomController extends \BaseController
             $this->checkAndRemoveDup();
             $this->calcAllVacancies();
         }
-        //print($day_of_week);
+
         $availabilities = DB::connection('mysql2')
                     ->table('vacancies')
                     ->where('day', '=', $day_of_week)
@@ -68,13 +68,21 @@ class RoomController extends \BaseController
                     ->get();
 
         $maxRemaining = 0;
+        $sortTime = array();
         foreach ($availabilities as $key => $val) {
-            $val->remaining  = round((strtotime(date("Y-m-d")." ".$val->end)
-                    - strtotime(date("Y-m-d")." ".$now)) / 60);
+            $val->remaining  = round((strtotime($date." ".$val->end)
+                    - strtotime($date." ".$time)) / 60);
 
             if ($val->remaining > $maxRemaining) {
                 $maxRemaining = $val->remaining;
             }
+            $sortTime[$key] = $val->remaining;
+        }
+
+        //sort by remaining time
+        array_multisort($sortTime, SORT_DESC, $availabilities);
+
+        foreach ($availabilities as $key => $val) {
             $val->maxRemaining = $maxRemaining;
         }
 
