@@ -11,6 +11,9 @@ Professor Mike Boctor
 ##Online Resource
 - [Online API Reference](http://corral.readme.io/)
 
+##Project Setup
+Follow [Laravel](http://laravel.com/docs/4.2/quick)'s quick start guide to setup the back-end to Corral.
+
 ##Team Members
 - Alex Bu [Email](mailto:atb91590@yahoo.com)
   - Android Developer
