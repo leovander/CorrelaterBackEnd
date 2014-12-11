@@ -67,10 +67,3 @@ Route::get('google/getContacts', 'GoogleController@getContacts');
 Route::resource('user', 'UserController');
 Route::resource('event', 'GoogleEventController');
 Route::resource('google_calendar', 'GoogleCalendarController');
-
-//CECS448 Project: Labcrasher
-Route::get('labcrasher', 'RoomController@index');
-Route::get('labcrasher/getClassSchedule', 'RoomController@getClassSchedule');
-Route::get('labcrasher/calcVacancies', 'RoomController@calcVacancies');
-Route::get('labcrasher/getAvailabilities/{date}/{time}', 'RoomController@getAvailabilities');
-Route::get('labcrasher/checkAndRemoveDup', 'RoomController@checkAndRemoveDup');
